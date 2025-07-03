@@ -7,12 +7,9 @@ from tqdm import tqdm
 # Proje kök dizinini Python yoluna ekle (betiğin tek başına çalışabilmesi için)
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# DÜZELTME: Eskimiş 'game_logic' yerine ana uygulama tarafından kullanılan
-# 'GameManager' sınıfını kullan.
 from game.game_manager import GameManager
 from ai.ai_player import AIPlayer, load_pool, save_pool, create_player_pool
 from ai.elo import update_elo
-# DÜZELTME: Kurallar modülünü import et.
 from core import rules
 
 # --- Genetik Algoritma Parametreleri ---
@@ -52,20 +49,16 @@ def mutate(weights):
 
 def simulate_game(player1, player2):
     """
-    DÜZELTME: Bu fonksiyon artık GameManager'ı kullanarak iki AI oyuncusu
-    arasında bir oyun simüle eder.
+    DÜZELTME: Bu fonksiyon artık her AI'a ELO'su ile orantılı bir
+    düşünme süresi vererek daha gerçekçi bir simülasyon yapar.
     """
     players = { 'W': player1, 'B': player2 }
     if random.random() < 0.5:
         players = { 'W': player2, 'B': player1 }
 
     game = GameManager()
-    # Antrenman için zaman kontrolü olmayan bir oyun kur
     game.setup_new_game(mode='pve') 
     game.start_game()
-
-    # Hızlı simülasyonlar için çok kısa bir düşünme süresi ayarla
-    game.ai_time_limit = 0.1 
 
     for _ in range(150): # Sonsuz oyunları önlemek için hamle limiti
         if game.game_over:
@@ -73,13 +66,19 @@ def simulate_game(player1, player2):
         
         current_ai_player = players[game.current_player]
         
-        # GameManager'ın o anki tur için doğru AI ağırlıklarını kullanmasını sağla
+        # GameManager'ın o anki tur için doğru AI ağırlıklarını ve düşünme süresini kullanmasını sağla
         game.ai_weights = current_ai_player.weights
         
+        # YENİ: Düşünme süresi ELO'ya bağlı.
+        # 1000 ELO'luk bir oyuncu için ~0.2 saniye, 1200 ELO için ~0.6 saniye.
+        # Bu, daha güçlü oyuncuların avantajını kullanmasını sağlar.
+        base_time = 0.1
+        elo_bonus = max(0, (current_ai_player.elo - 1000) / 500.0) # Her 500 ELO için +1 saniye
+        game.ai_time_limit = base_time + elo_bonus
+
         move_data = game.request_ai_move()
 
         if not move_data or not move_data.get("move"):
-            # AI hamle bulamazsa, mevcut oyuncu kaybeder.
             game.winner = rules.get_opponent(game.current_player)
             game.game_over = True
             break
@@ -88,8 +87,6 @@ def simulate_game(player1, player2):
         game.play_turn(start_pos, end_pos)
 
     if game.winner:
-        # players sözlüğü, renkleri oyuncu nesnelerine eşler.
-        # Kazanan rengin oyuncu nesnesini bul.
         winner_player = players.get(game.winner)
         loser_player = players.get(rules.get_opponent(game.winner))
         return winner_player, loser_player
@@ -104,7 +101,6 @@ def run_generation(pool, games_per_player=5):
 
     print(f"Nesil simülasyonu: {len(pool)} oyuncu, her biri ~{games_per_player} oyun...")
     
-    # Maç sayısını hesapla
     num_matches = (len(pool) * games_per_player) // 2
     
     for _ in tqdm(range(num_matches), desc="Maçlar Oynanıyor"):
@@ -143,20 +139,20 @@ def run_generation(pool, games_per_player=5):
         
     return pool
 
-def run_training_session(num_generations=10, games_per_player=10):
+def run_training_session(num_generations=10, games_per_player=10, pool_size=20):
     """Ana evrimsel eğitim fonksiyonu."""
     print("AI Oyuncu Havuzu Yükleniyor veya Oluşturuluyor...")
-    pool = load_pool() # Varsayılan yolu kullanır
-    if not pool:
-        print("Mevcut havuz bulunamadı. 100 oyuncudan oluşan yeni bir havuz oluşturuluyor...")
-        pool = create_player_pool(100)
+    pool = load_pool()
+    if not pool or len(pool) < pool_size:
+        print(f"Mevcut havuz yetersiz. {pool_size} oyuncudan oluşan yeni bir havuz oluşturuluyor...")
+        pool = create_player_pool(pool_size)
     
     print(f"{num_generations} nesil boyunca evrimsel simülasyon başlatılıyor...")
     
     for gen in range(num_generations):
         print(f"\n--- NESİL {gen + 1}/{num_generations} ---")
         pool = run_generation(pool, games_per_player)
-        save_pool(pool) # Varsayılan yola kaydeder
+        save_pool(pool)
 
     print("\nEvrimsel eğitim tamamlandı.")
     
@@ -167,4 +163,5 @@ def run_training_session(num_generations=10, games_per_player=10):
         print(f"{i+1}. {player.name}, ELO: {player.elo:.2f}")
 
 if __name__ == "__main__":
-    run_training_session(num_generations=5, games_per_player=5)
+    # Daha anlamlı sonuçlar için havuz boyutunu ve oyun sayısını artırabiliriz.
+    run_training_session(num_generations=10, games_per_player=10, pool_size=20)

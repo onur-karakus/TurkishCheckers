@@ -1,35 +1,242 @@
 [
     {
-        "id": 3,
-        "name": "AI-003-Positional",
-        "elo": 1133.5666666666682,
+        "id": 8,
+        "name": "AI-009",
+        "elo": 1135.0698306786107,
         "weights": {
-            "piece_value": 9.5,
-            "dama_value": 30.0,
-            "advancement_bonus": 0.2,
-            "center_control_bonus": 0.5
+            "piece_value": 11.218241379374346,
+            "dama_value": 31.319857012437815,
+            "advancement_bonus": 0.5618606605059406,
+            "center_control_bonus": 0.19031281861718038,
+            "defensive_bonus": 0.06332880271458652
         }
     },
     {
-        "id": 1,
-        "name": "AI-001-Master",
-        "elo": 1133.566666666667,
+        "id": 3,
+        "name": "AI-004",
+        "elo": 1125.201606486744,
         "weights": {
-            "piece_value": 10.5,
-            "dama_value": 28.0,
-            "advancement_bonus": 0.45,
-            "center_control_bonus": 0.35
+            "piece_value": 11.218241379374346,
+            "dama_value": 28.5410078144714,
+            "advancement_bonus": 0.5618606605059406,
+            "center_control_bonus": 0.16381534908216208,
+            "defensive_bonus": 0.06332880271458652
+        }
+    },
+    {
+        "id": 9,
+        "name": "AI-010",
+        "elo": 1124.2313791596705,
+        "weights": {
+            "piece_value": 11.218241379374346,
+            "dama_value": 31.319857012437815,
+            "advancement_bonus": 0.5618606605059406,
+            "center_control_bonus": 0.16381534908216208,
+            "defensive_bonus": 0.06332880271458652
+        }
+    },
+    {
+        "id": 4,
+        "name": "AI-005",
+        "elo": 1100.3732544298227,
+        "weights": {
+            "piece_value": 11.218241379374346,
+            "dama_value": 31.319857012437815,
+            "advancement_bonus": 0.5618606605059406,
+            "center_control_bonus": 0.18055820098073383,
+            "defensive_bonus": 0.06332880271458652
+        }
+    },
+    {
+        "id": 5,
+        "name": "AI-006",
+        "elo": 1060.624484601913,
+        "weights": {
+            "piece_value": 11.528359828563776,
+            "dama_value": 31.319857012437815,
+            "advancement_bonus": 0.5588895062270823,
+            "center_control_bonus": 0.19031281861718038,
+            "defensive_bonus": 0.06332880271458652
+        }
+    },
+    {
+        "id": 10,
+        "name": "AI-011",
+        "elo": 1058.6504515863794,
+        "weights": {
+            "piece_value": 11.528359828563776,
+            "dama_value": 32.34118145029896,
+            "advancement_bonus": 0.5588895062270823,
+            "center_control_bonus": 0.33896591605587634,
+            "defensive_bonus": 0.14327518223992403
+        }
+    },
+    {
+        "id": 15,
+        "name": "AI-016",
+        "elo": 1018.075092290586,
+        "weights": {
+            "piece_value": 11.218241379374346,
+            "dama_value": 31.319857012437815,
+            "advancement_bonus": 0.5618606605059406,
+            "center_control_bonus": 0.16381534908216208,
+            "defensive_bonus": 0.06332880271458652
         }
     },
     {
         "id": 2,
-        "name": "AI-002-Aggressive",
-        "elo": 1133.566666666666,
+        "name": "AI-003",
+        "elo": 1006.6698081578811,
         "weights": {
-            "piece_value": 11.0,
-            "dama_value": 25.0,
-            "advancement_bonus": 0.6,
-            "center_control_bonus": 0.2
+            "piece_value": 11.218241379374346,
+            "dama_value": 28.5410078144714,
+            "advancement_bonus": 0.5618606605059406,
+            "center_control_bonus": 0.16381534908216208,
+            "defensive_bonus": 0.06332880271458652
+        }
+    },
+    {
+        "id": 11,
+        "name": "AI-012",
+        "elo": 1000.7885922202142,
+        "weights": {
+            "piece_value": 11.218241379374346,
+            "dama_value": 31.319857012437815,
+            "advancement_bonus": 0.5618606605059406,
+            "center_control_bonus": 0.16381534908216208,
+            "defensive_bonus": 0.06332880271458652
+        }
+    },
+    {
+        "id": 19,
+        "name": "AI-020",
+        "elo": 996.4450872120233,
+        "weights": {
+            "piece_value": 11.218241379374346,
+            "dama_value": 31.319857012437815,
+            "advancement_bonus": 0.5618606605059406,
+            "center_control_bonus": 0.19031281861718038,
+            "defensive_bonus": 0.05786473576355741
+        }
+    },
+    {
+        "id": 1,
+        "name": "AI-002",
+        "elo": 994.415820066364,
+        "weights": {
+            "piece_value": 11.218241379374346,
+            "dama_value": 31.319857012437815,
+            "advancement_bonus": 0.5618606605059406,
+            "center_control_bonus": 0.16381534908216208,
+            "defensive_bonus": 0.06332880271458652
+        }
+    },
+    {
+        "id": 6,
+        "name": "AI-007",
+        "elo": 990.0999142410886,
+        "weights": {
+            "piece_value": 11.218241379374346,
+            "dama_value": 31.319857012437815,
+            "advancement_bonus": 0.5618606605059406,
+            "center_control_bonus": 0.19031281861718038,
+            "defensive_bonus": 0.06332880271458652
+        }
+    },
+    {
+        "id": 13,
+        "name": "AI-014",
+        "elo": 975.5269485859658,
+        "weights": {
+            "piece_value": 11.218241379374346,
+            "dama_value": 31.319857012437815,
+            "advancement_bonus": 0.5618606605059406,
+            "center_control_bonus": 0.19031281861718038,
+            "defensive_bonus": 0.06332880271458652
+        }
+    },
+    {
+        "id": 16,
+        "name": "AI-017",
+        "elo": 973.2670930708579,
+        "weights": {
+            "piece_value": 11.218241379374346,
+            "dama_value": 31.319857012437815,
+            "advancement_bonus": 0.5618606605059406,
+            "center_control_bonus": 0.19031281861718038,
+            "defensive_bonus": 0.06332880271458652
+        }
+    },
+    {
+        "id": 14,
+        "name": "AI-015",
+        "elo": 962.2422569145991,
+        "weights": {
+            "piece_value": 11.218241379374346,
+            "dama_value": 31.319857012437815,
+            "advancement_bonus": 0.5618606605059406,
+            "center_control_bonus": 0.16261035978384558,
+            "defensive_bonus": 0.06332880271458652
+        }
+    },
+    {
+        "id": 18,
+        "name": "AI-019",
+        "elo": 940.7070596826261,
+        "weights": {
+            "piece_value": 11.218241379374346,
+            "dama_value": 31.319857012437815,
+            "advancement_bonus": 0.5430916816141182,
+            "center_control_bonus": 0.18055820098073383,
+            "defensive_bonus": 0.06332880271458652
+        }
+    },
+    {
+        "id": 12,
+        "name": "AI-013",
+        "elo": 917.3677196347433,
+        "weights": {
+            "piece_value": 11.218241379374346,
+            "dama_value": 31.319857012437815,
+            "advancement_bonus": 0.5618606605059406,
+            "center_control_bonus": 0.19031281861718038,
+            "defensive_bonus": 0.06332880271458652
+        }
+    },
+    {
+        "id": 7,
+        "name": "AI-008",
+        "elo": 907.1499333297529,
+        "weights": {
+            "piece_value": 11.218241379374346,
+            "dama_value": 31.319857012437815,
+            "advancement_bonus": 0.5618606605059406,
+            "center_control_bonus": 0.16381534908216208,
+            "defensive_bonus": 0.06332880271458652
+        }
+    },
+    {
+        "id": 17,
+        "name": "AI-018",
+        "elo": 878.5552807720434,
+        "weights": {
+            "piece_value": 11.218241379374346,
+            "dama_value": 31.319857012437815,
+            "advancement_bonus": 0.5618606605059406,
+            "center_control_bonus": 0.18055820098073383,
+            "defensive_bonus": 0.06332880271458652
+        }
+    },
+    {
+        "id": 0,
+        "name": "AI-001",
+        "elo": 834.5383868781139,
+        "weights": {
+            "piece_value": 11.218241379374346,
+            "dama_value": 28.5410078144714,
+            "advancement_bonus": 0.5618606605059406,
+            "center_control_bonus": 0.16381534908216208,
+            "defensive_bonus": 0.06332880271458652
         }
     }
 ]
