@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Arkadaşınla Oyna - Türk Daması{% endblock %}
+
+{% block game_state_script %}
+<script>
+    const initialGameState = {{ game_state | tojson | safe }};
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="board-area">
+        <div id="player-info-top" class="player-info-box">
+            <span class="player-name">Siyah</span>
+            <span class="player-clock">10:00</span>
+        </div>
+        <div id="board-container">
+            <div class="coordinates files">
+                <span>a</span><span>b</span><span>c</span><span>d</span><span>e</span><span>f</span><span>g</span><span>h</span>
+            </div>
+            <div class="coordinates ranks">
+                <span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span>
+            </div>
+            <div id="board"></div>
+            <svg id="arrow-container" class="arrow-svg"></svg>
+        </div>
+        <div id="player-info-bottom" class="player-info-box">
+            <span class="player-name">Beyaz</span>
+            <span class="player-clock">10:00</span>
+        </div>
+    </div>
+
+    <div class="sidebar-container">
+        <div class="game-panel">
+            <a href="{{ url_for('home') }}" style="text-decoration: none; color: inherit;"><h1 class="panel-title">Türk Daması</h1></a>
+            <p class="message"></p>
+            <div class="analysis-container">
+                <div class="analysis-header">
+                    <h4>Motor Analizi</h4>
+                    <button id="toggle-analysis-btn">Gizle</button>
+                </div>
+                <div class="engine-analysis-panel">
+                    <div class="evaluation-bar-container">
+                        <div id="evaluation-bar">
+                            <div id="eval-bar-white"></div>
+                            <div id="eval-bar-black"></div>
+                        </div>
+                        <div id="evaluation-score">0.50</div>
+                    </div>
+                    <div class="engine-lines-container">
+                        <ul id="engine-lines">
+                            <li>Hamle yapıldıkça analiz güncellenir...</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="controls-box">
+                <form action="{{ url_for('play_vs_friend') }}" method="POST" id="new-game-form">
+                    <div class="time-control-wrapper">
+                         <label for="time-control-select">Zaman Kontrolü</label>
+                         <select id="time-control-select" name="time_control">
+                            <option value="600_0" {% if game_state.time_white == 600 and game_state.increment == 0 %}selected{% endif %}>10 Dakika</option>
+                            <option value="300_3" {% if game_state.time_white == 300 and game_state.increment == 3 %}selected{% endif %}>5 | 3</option>
+                            <option value="180_2" {% if game_state.time_white == 180 and game_state.increment == 2 %}selected{% endif %}>3 | 2</option>
+                            <option value="60_1" {% if game_state.time_white == 60 and game_state.increment == 1 %}selected{% endif %}>1 | 1</option>
+                            <option value="unlimited" {% if game_state.time_white == None %}selected{% endif %}>Sınırsız</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="start-game-btn">Yeni Oyuna Başla</button>
+                </form>
+            </div>
+        </div>
+        <div class="notation-panel">
+            <h2>Hamleler</h2>
+            <div id="notation-list-container"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/main.js') }}" type="module"></script>
+{% endblock %}

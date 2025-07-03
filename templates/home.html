@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Türk Daması Oyna</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="home-body">
+
+    <div class="home-container">
+        <div class="home-left">
+            <div class="home-board">
+                <!-- Tahta JavaScript ile dinamik olarak doldurulacak -->
+            </div>
+        </div>
+        <div class="home-right">
+            <h1>Türk Daması Oyna</h1>
+            <p class="subtitle">#1 Numaralı Dama Sitesinde Oyna</p>
+            
+            <!-- DÜZELTME: Linkler yeni rotalara yönlendirildi -->
+            <a href="{{ url_for('play_vs_friend') }}" class="button-link primary">
+                <div class="button-content">
+                    <span class="button-icon">🧑‍🤝‍🧑</span>
+                    <div class="button-text">
+                        <strong>Arkadaşınla Oyna</strong>
+                        <small>Aynı bilgisayarda bir arkadaşınla oyna</small>
+                    </div>
+                </div>
+            </a>
+            
+            <a href="{{ url_for('play_vs_computer') }}" class="button-link secondary">
+                <div class="button-content">
+                    <span class="button-icon">🤖</span>
+                    <div class="button-text">
+                        <strong>Bilgisayara Karşı Oyna</strong>
+                        <small>Yapay zekaya karşı yeteneklerini sına</small>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const boardContainer = document.querySelector('.home-board');
+            if (boardContainer) {
+                for (let i = 0; i < 64; i++) {
+                    const square = document.createElement('div');
+                    const row = Math.floor(i / 8);
+                    const col = i % 8;
+                    square.className = `square ${(row + col) % 2 !== 0 ? 'dark' : 'light'}`;
+                    if ((row === 1 || row === 2)) {
+                       square.innerHTML = `<div class="piece piece-black"></div>`;
+                    }
+                    if ((row === 5 || row === 6)) {
+                       square.innerHTML = `<div class="piece piece-white"></div>`;
+                    }
+                    boardContainer.appendChild(square);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

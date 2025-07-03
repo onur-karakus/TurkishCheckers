@@ -1,0 +1,35 @@
+[
+    {
+        "id": 3,
+        "name": "AI-003-Positional",
+        "elo": 1133.5666666666682,
+        "weights": {
+            "piece_value": 9.5,
+            "dama_value": 30.0,
+            "advancement_bonus": 0.2,
+            "center_control_bonus": 0.5
+        }
+    },
+    {
+        "id": 1,
+        "name": "AI-001-Master",
+        "elo": 1133.566666666667,
+        "weights": {
+            "piece_value": 10.5,
+            "dama_value": 28.0,
+            "advancement_bonus": 0.45,
+            "center_control_bonus": 0.35
+        }
+    },
+    {
+        "id": 2,
+        "name": "AI-002-Aggressive",
+        "elo": 1133.566666666666,
+        "weights": {
+            "piece_value": 11.0,
+            "dama_value": 25.0,
+            "advancement_bonus": 0.6,
+            "center_control_bonus": 0.2
+        }
+    }
+]

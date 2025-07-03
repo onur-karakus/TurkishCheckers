@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animasyon Testi - Türk Daması</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .test-controls {
+            display: flex;
+            gap: 10px;
+            background-color: var(--color-panel-bg);
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .test-controls button {
+            padding: 10px 15px;
+            font-size: 1em;
+            background-color: var(--color-accent-green);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .test-controls button:hover {
+            background-color: var(--color-accent-green-hover);
+        }
+        #board-container {
+            /* Test için tahta boyutunu sabitleyelim */
+            width: 600px;
+            height: 600px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Animasyon Test Ortamı</h1>
+    
+    <div id="board-container">
+        <div id="board">
+            <!-- Test Tahtası -->
+        </div>
+    </div>
+
+    <div class="test-controls">
+        <button id="test-btn-1">c2 -> c4 Taşı</button>
+        <button id="test-btn-2">f5 -> b1 Taşı</button>
+        <button id="test-btn-3">a6 -> h6 Taşı (Uzun Yatay)</button>
+        <button id="test-btn-4">Sıfırla</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const board = document.getElementById('board');
+            const squarePositions = {};
+            let originalPiece = null;
+
+            // 1. Tahtayı ve taşı oluştur
+            function setupBoard() {
+                board.innerHTML = ''; // Tahtayı temizle
+                for (let r = 0; r < 8; r++) {
+                    for (let c = 0; c < 8; c++) {
+                        const square = document.createElement('div');
+                        square.className = `square ${(r + c) % 2 !== 0 ? 'dark' : 'light'}`;
+                        square.dataset.row = r;
+                        square.dataset.col = c;
+                        board.appendChild(square);
+                    }
+                }
+                // Test için başlangıç taşı (c2 = row 6, col 2)
+                const startSquare = getSquare(6, 2);
+                startSquare.innerHTML = '<div class="piece piece-white" id="test-piece"></div>';
+                originalPiece = document.getElementById('test-piece');
+                
+                // Pozisyonları hesapla
+                calculateSquarePositions();
+            }
+
+            // 2. Karelerin merkez koordinatlarını hesapla ve önbelleğe al
+            function calculateSquarePositions() {
+                const boardRect = board.getBoundingClientRect();
+                for (let r = 0; r < 8; r++) {
+                    for (let c = 0; c < 8; c++) {
+                        const square = getSquare(r, c);
+                        const squareRect = square.getBoundingClientRect();
+                        const key = `${r}-${c}`;
+                        squarePositions[key] = {
+                            x: (squareRect.left - boardRect.left) + (squareRect.width / 2),
+                            y: (squareRect.top - boardRect.top) + (squareRect.height / 2)
+                        };
+                    }
+                }
+                console.log("Kare pozisyonları hesaplandı:", squarePositions);
+            }
+
+            // Yardımcı fonksiyon: row/col ile kareyi bul
+            function getSquare(r, c) {
+                return board.querySelector(`.square[data-row='${r}'][data-col='${c}']`);
+            }
+
+            // 3. Animasyon fonksiyonu
+            async function animatePiece(fromRow, fromCol, toRow, toCol) {
+                if (!originalPiece) return;
+
+                const startKey = `${fromRow}-${fromCol}`;
+                const endKey = `${toRow}-${toCol}`;
+
+                const startCoords = squarePositions[startKey];
+                const endCoords = squarePositions[endKey];
+
+                if (!startCoords || !endCoords) {
+                    console.error("Başlangıç veya bitiş koordinatları bulunamadı!");
+                    return;
+                }
+
+                // Taşı klonla
+                const movingPiece = originalPiece.cloneNode(true);
+                board.appendChild(movingPiece);
+                movingPiece.classList.add('animating-piece');
+                
+                const pieceWidth = originalPiece.offsetWidth;
+                const pieceHeight = originalPiece.offsetHeight;
+
+                // Orijinal taşı gizle
+                originalPiece.style.visibility = 'hidden';
+
+                // Klonun başlangıç pozisyonunu ayarla (merkezlenmiş)
+                movingPiece.style.width = `${pieceWidth}px`;
+                movingPiece.style.height = `${pieceHeight}px`;
+                movingPiece.style.left = `${startCoords.x - pieceWidth / 2}px`;
+                movingPiece.style.top = `${startCoords.y - pieceHeight / 2}px`;
+                movingPiece.style.transform = 'translate(0, 0)';
+
+                // Hedefe olan mesafeyi hesapla
+                const deltaX = endCoords.x - startCoords.x;
+                const deltaY = endCoords.y - startCoords.y;
+                
+                // Animasyonu başlat
+                await new Promise(resolve => {
+                    // Bu gecikme, tarayıcının klonu boyamasına izin verir, ani geçişi önler
+                    requestAnimationFrame(() => {
+                        movingPiece.style.transition = 'transform 0.5s ease-in-out';
+                        movingPiece.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+                        
+                        movingPiece.addEventListener('transitionend', resolve, { once: true });
+                    });
+                });
+
+                // Animasyon bitti, temizlik yap
+                const endSquare = getSquare(toRow, toCol);
+                endSquare.appendChild(originalPiece); // Orijinal taşı yeni yerine taşı
+                originalPiece.style.visibility = 'visible'; // Görünür yap
+                board.removeChild(movingPiece); // Klonu kaldır
+            }
+
+            // Buton olay dinleyicileri
+            document.getElementById('test-btn-1').addEventListener('click', () => {
+                const pieceParent = originalPiece.parentElement;
+                animatePiece(pieceParent.dataset.row, pieceParent.dataset.col, 4, 2); // c4
+            });
+
+            document.getElementById('test-btn-2').addEventListener('click', () => {
+                const pieceParent = originalPiece.parentElement;
+                animatePiece(pieceParent.dataset.row, pieceParent.dataset.col, 7, 1); // b1
+            });
+            
+            document.getElementById('test-btn-3').addEventListener('click', () => {
+                const pieceParent = originalPiece.parentElement;
+                animatePiece(pieceParent.dataset.row, pieceParent.dataset.col, 2, 7); // h6
+            });
+
+            document.getElementById('test-btn-4').addEventListener('click', () => {
+                setupBoard();
+            });
+
+            // Başlangıç kurulumu
+            setupBoard();
+            window.addEventListener('resize', calculateSquarePositions);
+        });
+    </script>
+</body>
+</html>

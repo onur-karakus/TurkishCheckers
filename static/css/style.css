@@ -1,0 +1,128 @@
+/*
+  Türk Daması Projesi için Stil Dosyası
+  REVİZYON: Analiz paneli ve yeni sayfa yapısı için stiller eklendi.
+*/
+
+:root {
+  --color-bg: #302e2c; 
+  --color-panel-bg: #262421;
+  --color-panel-bg-light: #3c3c3c;
+  --color-text: #e0e0e0;
+  --color-text-dark: #b2b2b2;
+  --color-accent-green: #85b056;
+  --color-accent-green-hover: #98c369;
+  --board-bg-light: #F0D9B5; 
+  --board-bg-dark: #B58863;
+  --board-border: #4d4c4a; 
+  --highlight-active: rgba(255, 255, 255, 0.1);
+  --highlight-mandatory: rgba(255, 0, 0, 0.4);
+  --board-size: clamp(400px, 85vh, 750px); 
+  --coord-size: 20px;
+  --arrow-color: rgba(25, 135, 84, 0.8);
+}
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+body { 
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background-color: var(--color-bg); 
+  color: var(--color-text);
+  display: flex;
+  justify-content: center; 
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 20px;
+  overflow-x: hidden;
+}
+.hidden {
+  display: none !important;
+}
+
+/* --- ANA SAYFA --- */
+.home-body { align-items: center; }
+.home-container { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 50px; width: 100%; max-width: 1100px; }
+.home-left { flex: 1; display: flex; justify-content: center; align-items: center; min-width: 400px; }
+.home-board { display: grid; grid-template-columns: repeat(8, 1fr); width: 100%; max-width: 420px; aspect-ratio: 1 / 1; border-radius: 5px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+.home-right { flex: 1; min-width: 350px; text-align: left; }
+.home-right h1 { font-size: clamp(2.5em, 5vw, 3.5em); font-weight: 700; line-height: 1.1; margin-bottom: 8px; }
+.home-right .subtitle { font-size: clamp(1em, 2vw, 1.2em); color: var(--color-text-dark); margin-bottom: 30px; }
+.button-link { display: block; text-decoration: none; color: white; border-radius: 8px; margin-bottom: 15px; transition: transform 0.2s ease, box-shadow 0.2s ease; padding: 15px 20px; border: 1px solid transparent; }
+.button-link:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+.button-link.primary { background-color: var(--color-accent-green); }
+.button-link.primary:hover { background-color: var(--color-accent-green-hover); }
+.button-link.secondary { background-color: var(--color-panel-bg-light); border-color: #555; }
+.button-link.secondary:hover { background-color: #4a4845; }
+.button-content { display: flex; align-items: center; gap: 20px; }
+.button-icon { font-size: 2.5em; }
+.button-text { display: flex; flex-direction: column; }
+.button-text strong { font-size: 1.4em; font-weight: 600; }
+.button-text small { font-size: 0.9em; color: var(--color-text-dark); }
+
+/* --- OYUN EKRANI --- */
+.page-container { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 25px; width: 100%; max-width: 1600px; }
+.board-area { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+/* DÜZELTME: Yan paneller için yeni bir container */
+.sidebar-container { flex: 1 1 320px; max-width: 400px; min-width: 300px; display: flex; flex-direction: column; gap: 20px; }
+.game-panel, .notation-panel { background-color: var(--color-panel-bg); border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+.notation-panel { height: auto; } /* Yüksekliği otomatik ayarla */
+.notation-panel h2 { margin: 0; padding-bottom: 10px; border-bottom: 2px solid #444; }
+#notation-list-container { max-height: 300px; flex-grow: 1; overflow-y: auto; font-family: "Courier New", monospace; font-size: 1.1em; }
+#notation-list-container ol { list-style: none; padding: 0; margin: 0; counter-reset: list-item; }
+#notation-list-container li { display: flex; align-items: center; padding: 6px 8px; border-radius: 4px; }
+#notation-list-container li:nth-child(odd) { background-color: var(--color-panel-bg-light); }
+#notation-list-container li::before { content: counter(list-item) "."; counter-increment: list-item; color: var(--color-text-dark); font-weight: bold; width: 35px; text-align: right; margin-right: 10px; }
+#notation-list-container .move-white, #notation-list-container .move-black { flex: 1; text-align: left; font-weight: bold; }
+
+/* Oyun Tahtası */
+#board-container { position: relative; width: var(--board-size); height: var(--board-size); }
+#board { display: grid; grid-template-columns: repeat(8, 1fr); width: 100%; height: 100%; }
+.square { display: flex; justify-content: center; align-items: center; position: relative; }
+.square.dark { background-color: var(--board-bg-dark); }
+.square.light { background-color: var(--board-bg-light); }
+.board-disabled { pointer-events: none; }
+.animating-piece { position: absolute; z-index: 1000; pointer-events: none; }
+.piece { width: 85%; height: 85%; border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center; border: 2px solid rgba(0, 0, 0, 0.2); position: relative; z-index: 2; visibility: visible; transition: box-shadow 0.2s; }
+.piece-white { background: radial-gradient(circle, #ffffff, #c7c7c7); box-shadow: inset 0 -3px 5px rgba(0,0,0,0.15), 0 4px 6px rgba(0,0,0,0.2); }
+.piece-black { background: radial-gradient(circle, #333333, #1a1a1a); color: #e0e0e0; box-shadow: inset 0 -3px 5px rgba(0,0,0,0.2), 0 4px 6px rgba(0,0,0,0.3); }
+.dama-crown { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.8em; font-weight: bold; color: gold; text-shadow: 0 0 4px black; line-height: 1; pointer-events: none; }
+.square.selected .piece { box-shadow: 0 0 15px 5px rgba(25, 135, 84, 0.8); }
+.square.valid-move::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 35%; height: 35%; background-color: rgba(0, 0, 0, 0.25); border-radius: 50%; cursor: pointer; z-index: 1; }
+.square.mandatory-capture::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--highlight-mandatory); z-index: 0; pointer-events: none; }
+.arrow-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+.arrow-svg line { stroke: var(--arrow-color); stroke-width: 10; stroke-linecap: round; }
+.coordinates { position: absolute; display: flex; color: var(--color-text-dark); font-size: 0.8em; font-weight: bold; pointer-events: none; z-index: 10; }
+.coordinates.files { bottom: -20px; left: 0; width: 100%; justify-content: space-around; }
+.coordinates.ranks { left: -20px; top: 0; height: 100%; flex-direction: column; justify-content: space-around; text-align: center; }
+
+/* Panel Stilleri */
+.player-info-box { width: 100%; max-width: var(--board-size); padding: 5px 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 1.1em; font-weight: bold; transition: background-color 0.3s ease; }
+.player-info-box.active { background-color: var(--highlight-active); }
+.player-clock { font-family: 'Courier New', Courier, monospace; font-size: 1.3em; color: white; background-color: #444; padding: 4px 12px; border-radius: 5px; }
+.panel-title { font-size: 1.8em; text-align: left; }
+.message { font-weight: bold; min-height: 1.2em; }
+.controls-box, .analysis-container { background-color: var(--color-panel-bg-light); padding: 15px; border-radius: 6px; }
+#new-game-form { display: flex; flex-direction: column; gap: 15px; }
+.time-control-wrapper, .difficulty-slider-wrapper { display: flex; flex-direction: column; gap: 8px; }
+#time-control-select { width: 100%; background-color: #555; border: 1px solid #666; color: white; font-size: 1em; padding: 8px; border-radius: 4px; }
+#difficulty-slider { width: 100%; cursor: pointer; }
+.start-game-btn { background-color: var(--color-accent-green); color: white; border: none; border-radius: 8px; padding: 15px; font-size: 1.2em; font-weight: bold; cursor: pointer; transition: background-color 0.2s; }
+.start-game-btn:hover { background-color: var(--color-accent-green-hover); }
+
+/* Analiz Paneli Stilleri */
+.analysis-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.analysis-header h4 { margin: 0; }
+#toggle-analysis-btn { background: none; border: 1px solid var(--color-text-dark); color: var(--color-text-dark); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8em; }
+#toggle-analysis-btn:hover { background-color: #555; }
+.engine-analysis-panel.hidden { display: none; }
+.evaluation-bar-container { position: relative; width: 100%; height: 28px; display: flex; align-items: center; margin-bottom: 10px; }
+#evaluation-bar { width: calc(100% - 60px); height: 100%; background-color: #555; border-radius: 4px; overflow: hidden; display: flex; }
+#eval-bar-white { background-color: #e0e0e0; height: 100%; transition: width 0.3s ease; }
+#evaluation-score { position: absolute; right: 0; width: 55px; text-align: center; font-weight: bold; font-size: 1.1em; font-family: monospace; }
+.engine-lines-container { font-family: monospace; font-size: 0.95em; }
+#engine-lines { list-style: none; padding: 0; margin: 0; }
+#engine-lines li { padding: 4px 0; border-bottom: 1px solid #4a4845; }
+#engine-lines li:last-child { border-bottom: none; }
+#engine-lines .variation { color: var(--color-text-dark); }
+#engine-lines .score { float: right; font-weight: bold; }

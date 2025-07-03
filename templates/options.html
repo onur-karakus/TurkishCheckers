@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oyun Seçenekleri</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-group strong { font-size: 1.1em; }
+        .difficulty-slider-container { margin-top: 20px; text-align: center; }
+        .difficulty-slider-container label { font-size: 1.1em; display: block; margin-bottom: 15px; }
+        .slider { width: 90%; }
+        .button-link { display: inline-block; margin-top: 15px; color: var(--color-primary); text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="menu-container">
+        <form action="{{ url_for('start_game') }}" method="POST">
+            {% if game_type == 'single' %}
+                <h1>Bilgisayara Karşı</h1>
+                <input type="hidden" name="mode" value="pve">
+                
+                <div class="form-group">
+                    <p><strong>Hangi renkle oynamak istersiniz?</strong></p>
+                    <label><input type="radio" name="player_color" value="W" checked> Beyaz (İlk siz başlarsınız)</label>
+                    <br>
+                    <label><input type="radio" name="player_color" value="B"> Siyah</label>
+                </div>
+                
+                <div class="difficulty-slider-container">
+                    <label for="difficulty"><strong>Zorluk Seviyesi: <span id="difficulty-value">50</span></strong></label>
+                    <input type="range" min="1" max="100" value="50" class="slider" id="difficulty" name="difficulty">
+                    <p style="font-size: 0.9em; color: #ccc; margin-top: 10px;">
+                        <strong>Not:</strong> Zorluk arttıkça, yapay zekanın kaç hamle ilerisini düşüneceği de artar. Yüksek seviyeler, daha akıllı hamleler ama daha uzun bekleme süreleri demektir.
+                    </p>
+                </div>
+
+                <button type="submit" class="button" style="margin-top: 25px;">Oyuna Başla</button>
+
+            {% elif game_type == 'multi' %}
+                <h1>İki Kişilik Mod</h1>
+                <p>Bu modda iki oyuncu aynı bilgisayar üzerinden sırayla oynar.</p>
+                <input type="hidden" name="mode" value="pvp">
+
+                <!-- YENİ: Zaman Kontrolü Seçenekleri -->
+                <div class="form-group">
+                    <p><strong>Zaman Kontrolü Seçin:</strong></p>
+                    <label><input type="radio" name="time_control" value="300_3" checked> 5 Dakika + 3 Saniye Artış</label>
+                    <br>
+                    <label><input type="radio" name="time_control" value="600_5"> 10 Dakika + 5 Saniye Artış</label>
+                    <br>
+                    <label><input type="radio" name="time_control" value="unlimited"> Sınırsız Zaman</label>
+                </div>
+
+                <div class="controls">
+                    <button type="submit" class="button">Oyuna Başla</button>
+                </div>
+            {% endif %}
+        </form>
+        <a href="{{ url_for('home') }}" class="button-link">Ana Menüye Dön</a>
+    </div>
+
+    <script>
+        const slider = document.getElementById("difficulty");
+        const output = document.getElementById("difficulty-value");
+        if (slider && output) {
+            output.innerHTML = slider.value;
+            slider.oninput = function() {
+                output.innerHTML = this.value;
+            }
+        }
+    </script>
+</body>
+</html>
