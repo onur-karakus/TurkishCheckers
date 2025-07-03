@@ -5,17 +5,21 @@ import os
 from tqdm import tqdm
 
 # Proje kök dizinini Python yoluna ekle (betiğin tek başına çalışabilmesi için)
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from game_logic import Game
+# DÜZELTME: Eskimiş 'game_logic' yerine ana uygulama tarafından kullanılan
+# 'GameManager' sınıfını kullan.
+from game.game_manager import GameManager
 from ai.ai_player import AIPlayer, load_pool, save_pool, create_player_pool
 from ai.elo import update_elo
+# DÜZELTME: Kurallar modülünü import et.
+from core import rules
 
 # --- Genetik Algoritma Parametreleri ---
-ELITE_RATE = 0.20      # Ebeveyn olarak seçilecek en iyi oyuncu oranı
-RELEGATION_RATE = 0.50 # Beyni (ağırlıkları) değiştirilecek en kötü oyuncu oranı
-MUTATION_RATE = 0.05   # Bir genin (ağırlığın) mutasyona uğrama olasılığı
-MUTATION_AMOUNT = 0.1  # Mutasyonun ne kadar büyük olacağı (yüzde olarak)
+ELITE_RATE = 0.20
+RELEGATION_RATE = 0.50
+MUTATION_RATE = 0.05
+MUTATION_AMOUNT = 0.1
 
 def select_parents(elite_pool):
     """Elit havuzdan rastgele iki farklı ebeveyn seçer."""
@@ -46,6 +50,52 @@ def mutate(weights):
             mutated_weights[key] = max(0, original_value * (1 + change_factor))
     return mutated_weights
 
+def simulate_game(player1, player2):
+    """
+    DÜZELTME: Bu fonksiyon artık GameManager'ı kullanarak iki AI oyuncusu
+    arasında bir oyun simüle eder.
+    """
+    players = { 'W': player1, 'B': player2 }
+    if random.random() < 0.5:
+        players = { 'W': player2, 'B': player1 }
+
+    game = GameManager()
+    # Antrenman için zaman kontrolü olmayan bir oyun kur
+    game.setup_new_game(mode='pve') 
+    game.start_game()
+
+    # Hızlı simülasyonlar için çok kısa bir düşünme süresi ayarla
+    game.ai_time_limit = 0.1 
+
+    for _ in range(150): # Sonsuz oyunları önlemek için hamle limiti
+        if game.game_over:
+            break
+        
+        current_ai_player = players[game.current_player]
+        
+        # GameManager'ın o anki tur için doğru AI ağırlıklarını kullanmasını sağla
+        game.ai_weights = current_ai_player.weights
+        
+        move_data = game.request_ai_move()
+
+        if not move_data or not move_data.get("move"):
+            # AI hamle bulamazsa, mevcut oyuncu kaybeder.
+            game.winner = rules.get_opponent(game.current_player)
+            game.game_over = True
+            break
+
+        start_pos, end_pos = move_data["move"]
+        game.play_turn(start_pos, end_pos)
+
+    if game.winner:
+        # players sözlüğü, renkleri oyuncu nesnelerine eşler.
+        # Kazanan rengin oyuncu nesnesini bul.
+        winner_player = players.get(game.winner)
+        loser_player = players.get(rules.get_opponent(game.winner))
+        return winner_player, loser_player
+    
+    return None, None # Beraberlik
+
 def run_generation(pool, games_per_player=5):
     """Bir nesil boyunca simülasyonu çalıştırır."""
     if not pool:
@@ -54,16 +104,19 @@ def run_generation(pool, games_per_player=5):
 
     print(f"Nesil simülasyonu: {len(pool)} oyuncu, her biri ~{games_per_player} oyun...")
     
+    # Maç sayısını hesapla
     num_matches = (len(pool) * games_per_player) // 2
+    
     for _ in tqdm(range(num_matches), desc="Maçlar Oynanıyor"):
         if len(pool) < 2: continue
+        
         p1, p2 = random.sample(pool, 2)
         
         original_elo1, original_elo2 = p1.elo, p2.elo
         
         winner, _ = simulate_game(p1, p2)
         
-        p1_score = 0.5
+        p1_score = 0.5 # Beraberlik varsayımı
         if winner:
             p1_score = 1.0 if winner.id == p1.id else 0.0
             
@@ -76,7 +129,7 @@ def run_generation(pool, games_per_player=5):
     relegation_start_index = len(pool) - int(len(pool) * RELEGATION_RATE)
     
     elite_pool = pool[:elite_count]
-    if not elite_pool: return pool # Evrim için yeterli elit yoksa devam etme
+    if not elite_pool: return pool
 
     relegated_pool = pool[relegation_start_index:]
     
@@ -90,37 +143,10 @@ def run_generation(pool, games_per_player=5):
         
     return pool
 
-def simulate_game(player1, player2):
-    """İki AI oyuncusu arasında bir oyun simüle eder."""
-    players = { 'W': player1, 'B': player2 }
-    if random.random() < 0.5:
-        players = { 'W': player2, 'B': player1 }
-
-    game = Game(mode='eve')
-    
-    for _ in range(150):
-        if game.game_over: break
-        
-        current_ai_player = players[game.current_player]
-        move = game.get_computer_move(ai_weights=current_ai_player.weights, search_depth=2)
-
-        if not move or not move[0]:
-            winner_color = game.get_opponent(game.current_player)
-            game.game_over = True
-            game.winner = winner_color
-            break
-
-        start_pos, end_pos = move
-        game.play_turn(start_pos, end_pos)
-
-    if game.winner:
-        return players[game.winner], players.get(game.get_opponent(game.winner))
-    return None, None
-
 def run_training_session(num_generations=10, games_per_player=10):
-    """Ana evrimsel eğitim fonksiyonu. Flask uygulamasından çağrılabilir."""
+    """Ana evrimsel eğitim fonksiyonu."""
     print("AI Oyuncu Havuzu Yükleniyor veya Oluşturuluyor...")
-    pool = load_pool("ai/ai_pool.json")
+    pool = load_pool() # Varsayılan yolu kullanır
     if not pool:
         print("Mevcut havuz bulunamadı. 100 oyuncudan oluşan yeni bir havuz oluşturuluyor...")
         pool = create_player_pool(100)
@@ -130,7 +156,7 @@ def run_training_session(num_generations=10, games_per_player=10):
     for gen in range(num_generations):
         print(f"\n--- NESİL {gen + 1}/{num_generations} ---")
         pool = run_generation(pool, games_per_player)
-        save_pool(pool, "ai/ai_pool.json") 
+        save_pool(pool) # Varsayılan yola kaydeder
 
     print("\nEvrimsel eğitim tamamlandı.")
     
@@ -141,5 +167,4 @@ def run_training_session(num_generations=10, games_per_player=10):
         print(f"{i+1}. {player.name}, ELO: {player.elo:.2f}")
 
 if __name__ == "__main__":
-    # Bu betik doğrudan çalıştırıldığında varsayılan bir eğitim oturumu başlatır.
     run_training_session(num_generations=5, games_per_player=5)
