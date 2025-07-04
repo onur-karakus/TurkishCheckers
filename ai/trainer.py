@@ -165,7 +165,7 @@ def run_generation(pool, games_per_player, generation_number):
             print(f"UYARI: {player_to_recreate.name} için 100 denemede benzersiz bir klon üretilemedi. Değiştirilmeden bırakılıyor.")
     return pool
 
-def run_training_session(num_generations=10, games_per_player=10, pool_size=100):
+def run_training_session(num_generations=1, games_per_player=10, pool_size=100):
     """Ana evrimsel eğitim fonksiyonu."""
     print("AI Oyuncu Havuzu Yükleniyor veya Oluşturuluyor...")
     pool = load_pool()
@@ -195,4 +195,4 @@ def run_training_session(num_generations=10, games_per_player=10, pool_size=100)
         print(f"{i+1}. {player.name}, ELO: {player.elo:.2f}")
 
 if __name__ == "__main__":
-    run_training_session(num_generations=10, games_per_player=10, pool_size=100)
+    run_training_session(num_generations=1, games_per_player=10, pool_size=100)

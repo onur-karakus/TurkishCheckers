@@ -1,7 +1,7 @@
 [
     {
         "id": 2,
-        "name": "000002KHH",
+        "name": "000002FUH",
         "elo": 997.5184147764452,
         "weights": {
             "piece_value": 11.968223190806878,
@@ -12,11 +12,11 @@
         },
         "generation": 0,
         "creation_order": 2,
-        "dna": "KHH"
+        "dna": "FUH"
     },
     {
         "id": 9,
-        "name": "000009OJL",
+        "name": "000009OWL",
         "elo": 995.5635427623617,
         "weights": {
             "piece_value": 10.025004187700123,
@@ -27,11 +27,11 @@
         },
         "generation": 0,
         "creation_order": 9,
-        "dna": "OJL"
+        "dna": "OWL"
     },
     {
         "id": 0,
-        "name": "000000LSD",
+        "name": "000000GND",
         "elo": 993.2546960010144,
         "weights": {
             "piece_value": 8.142538937551944,
@@ -42,11 +42,11 @@
         },
         "generation": 0,
         "creation_order": 0,
-        "dna": "LSD"
+        "dna": "GND"
     },
     {
         "id": 53,
-        "name": "000053UOB",
+        "name": "000053XBB",
         "elo": 991.4443019236722,
         "weights": {
             "piece_value": 11.437284527620072,
@@ -57,11 +57,11 @@
         },
         "generation": 0,
         "creation_order": 53,
-        "dna": "UOB"
+        "dna": "XBB"
     },
     {
         "id": 43,
-        "name": "000043AHV",
+        "name": "000043KSV",
         "elo": 991.1665072875505,
         "weights": {
             "piece_value": 11.433652572623059,
@@ -72,11 +72,11 @@
         },
         "generation": 0,
         "creation_order": 43,
-        "dna": "AHV"
+        "dna": "KSV"
     },
     {
         "id": 98,
-        "name": "000098KRA",
+        "name": "000098OGA",
         "elo": 990.4173353623013,
         "weights": {
             "piece_value": 10.197331388820558,
@@ -87,11 +87,11 @@
         },
         "generation": 0,
         "creation_order": 98,
-        "dna": "KRA"
+        "dna": "OGA"
     },
     {
         "id": 87,
-        "name": "000087YTV",
+        "name": "000087GCV",
         "elo": 990.3093697660904,
         "weights": {
             "piece_value": 8.084615957173755,
@@ -102,11 +102,11 @@
         },
         "generation": 0,
         "creation_order": 87,
-        "dna": "YTV"
+        "dna": "GCV"
     },
     {
         "id": 44,
-        "name": "000044BZR",
+        "name": "000044CER",
         "elo": 990.2981233475564,
         "weights": {
             "piece_value": 8.439994386533302,
@@ -117,11 +117,11 @@
         },
         "generation": 0,
         "creation_order": 44,
-        "dna": "BZR"
+        "dna": "CER"
     },
     {
         "id": 89,
-        "name": "000089PHZ",
+        "name": "000089WKZ",
         "elo": 990.2899640720591,
         "weights": {
             "piece_value": 10.677708362908152,
@@ -132,11 +132,11 @@
         },
         "generation": 0,
         "creation_order": 89,
-        "dna": "PHZ"
+        "dna": "WKZ"
     },
     {
         "id": 40,
-        "name": "000040NHR",
+        "name": "000040BJR",
         "elo": 987.9806771514659,
         "weights": {
             "piece_value": 8.482825639305627,
@@ -147,11 +147,11 @@
         },
         "generation": 0,
         "creation_order": 40,
-        "dna": "NHR"
+        "dna": "BJR"
     },
     {
         "id": 34,
-        "name": "000034BLS",
+        "name": "000034POS",
         "elo": 987.9561843969282,
         "weights": {
             "piece_value": 10.863949308241846,
@@ -162,11 +162,11 @@
         },
         "generation": 0,
         "creation_order": 34,
-        "dna": "BLS"
+        "dna": "POS"
     },
     {
         "id": 67,
-        "name": "000067XDE",
+        "name": "000067FTE",
         "elo": 987.9048731772625,
         "weights": {
             "piece_value": 9.535062817649033,
@@ -177,11 +177,11 @@
         },
         "generation": 0,
         "creation_order": 67,
-        "dna": "XDE"
+        "dna": "FTE"
     },
     {
         "id": 23,
-        "name": "000023XAL",
+        "name": "000023JBL",
         "elo": 986.1053262651312,
         "weights": {
             "piece_value": 9.87362367187717,
@@ -192,11 +192,11 @@
         },
         "generation": 0,
         "creation_order": 23,
-        "dna": "XAL"
+        "dna": "JBL"
     },
     {
         "id": 63,
-        "name": "000063YDL",
+        "name": "000063NVL",
         "elo": 985.7925218612708,
         "weights": {
             "piece_value": 11.114956584833589,
@@ -207,11 +207,11 @@
         },
         "generation": 0,
         "creation_order": 63,
-        "dna": "YDL"
+        "dna": "NVL"
     },
     {
         "id": 73,
-        "name": "000073YLQ",
+        "name": "000073UAQ",
         "elo": 985.6572645570468,
         "weights": {
             "piece_value": 10.638117236100031,
@@ -222,11 +222,11 @@
         },
         "generation": 0,
         "creation_order": 73,
-        "dna": "YLQ"
+        "dna": "UAQ"
     },
     {
         "id": 51,
-        "name": "000051STA",
+        "name": "000051QRA",
         "elo": 985.3473212223115,
         "weights": {
             "piece_value": 10.194266003051753,
@@ -237,11 +237,11 @@
         },
         "generation": 0,
         "creation_order": 51,
-        "dna": "STA"
+        "dna": "QRA"
     },
     {
         "id": 81,
-        "name": "000081VED",
+        "name": "000081WUD",
         "elo": 984.7906504487485,
         "weights": {
             "piece_value": 11.343487439991922,
@@ -252,11 +252,11 @@
         },
         "generation": 0,
         "creation_order": 81,
-        "dna": "VED"
+        "dna": "WUD"
     },
     {
         "id": 86,
-        "name": "000086MPG",
+        "name": "000086DEG",
         "elo": 984.5721093953044,
         "weights": {
             "piece_value": 11.851716742723058,
@@ -267,11 +267,11 @@
         },
         "generation": 0,
         "creation_order": 86,
-        "dna": "MPG"
+        "dna": "DEG"
     },
     {
         "id": 30,
-        "name": "000030TNO",
+        "name": "000030KRO",
         "elo": 984.5412870297047,
         "weights": {
             "piece_value": 8.3053121492014,
@@ -282,11 +282,11 @@
         },
         "generation": 0,
         "creation_order": 30,
-        "dna": "TNO"
+        "dna": "KRO"
     },
     {
         "id": 78,
-        "name": "000078KHR",
+        "name": "000078UHR",
         "elo": 984.3631338529399,
         "weights": {
             "piece_value": 11.386544276649339,
@@ -297,11 +297,11 @@
         },
         "generation": 0,
         "creation_order": 78,
-        "dna": "KHR"
+        "dna": "UHR"
     },
     {
         "id": 42,
-        "name": "000042MZO",
+        "name": "000042PIO",
         "elo": 982.2199836886072,
         "weights": {
             "piece_value": 10.835235678274548,
@@ -312,11 +312,11 @@
         },
         "generation": 0,
         "creation_order": 42,
-        "dna": "MZO"
+        "dna": "PIO"
     },
     {
         "id": 54,
-        "name": "000054GPR",
+        "name": "000054UQR",
         "elo": 981.9293433506584,
         "weights": {
             "piece_value": 11.355003084162579,
@@ -327,11 +327,11 @@
         },
         "generation": 0,
         "creation_order": 54,
-        "dna": "GPR"
+        "dna": "UQR"
     },
     {
         "id": 52,
-        "name": "000052HOD",
+        "name": "000052DDD",
         "elo": 981.5217120686259,
         "weights": {
             "piece_value": 8.226800366747833,
@@ -342,11 +342,11 @@
         },
         "generation": 0,
         "creation_order": 52,
-        "dna": "HOD"
+        "dna": "DDD"
     },
     {
         "id": 80,
-        "name": "000080RVV",
+        "name": "000080KPV",
         "elo": 980.7648638915259,
         "weights": {
             "piece_value": 8.584125089093861,
@@ -357,11 +357,11 @@
         },
         "generation": 0,
         "creation_order": 80,
-        "dna": "RVV"
+        "dna": "KPV"
     },
     {
         "id": 28,
-        "name": "000028MMY",
+        "name": "000028KOY",
         "elo": 979.166720377895,
         "weights": {
             "piece_value": 10.507483057191996,
@@ -372,11 +372,11 @@
         },
         "generation": 0,
         "creation_order": 28,
-        "dna": "MMY"
+        "dna": "KOY"
     },
     {
         "id": 45,
-        "name": "000045IES",
+        "name": "000045RMS",
         "elo": 978.2860241181055,
         "weights": {
             "piece_value": 8.519436366882614,
@@ -387,11 +387,11 @@
         },
         "generation": 0,
         "creation_order": 45,
-        "dna": "IES"
+        "dna": "RMS"
     },
     {
         "id": 95,
-        "name": "000095NPB",
+        "name": "000095SAB",
         "elo": 978.2422031924725,
         "weights": {
             "piece_value": 9.854441863761439,
@@ -402,11 +402,11 @@
         },
         "generation": 0,
         "creation_order": 95,
-        "dna": "NPB"
+        "dna": "SAB"
     },
     {
         "id": 16,
-        "name": "000016OVL",
+        "name": "000016IJL",
         "elo": 976.3406122046189,
         "weights": {
             "piece_value": 9.622296718261158,
@@ -417,11 +417,11 @@
         },
         "generation": 0,
         "creation_order": 16,
-        "dna": "OVL"
+        "dna": "IJL"
     },
     {
         "id": 46,
-        "name": "000046ZUA",
+        "name": "000046OCA",
         "elo": 975.5401978048227,
         "weights": {
             "piece_value": 11.965055687341664,
@@ -432,11 +432,11 @@
         },
         "generation": 0,
         "creation_order": 46,
-        "dna": "ZUA"
+        "dna": "OCA"
     },
     {
         "id": 55,
-        "name": "000055SDL",
+        "name": "000055HFL",
         "elo": 973.4222659721145,
         "weights": {
             "piece_value": 8.245848835726346,
@@ -447,11 +447,11 @@
         },
         "generation": 0,
         "creation_order": 55,
-        "dna": "SDL"
+        "dna": "HFL"
     },
     {
         "id": 14,
-        "name": "000014NIF",
+        "name": "000014QXF",
         "elo": 971.8932542017319,
         "weights": {
             "piece_value": 8.553331949665903,
@@ -462,11 +462,11 @@
         },
         "generation": 0,
         "creation_order": 14,
-        "dna": "NIF"
+        "dna": "QXF"
     },
     {
         "id": 58,
-        "name": "000058QOW",
+        "name": "000058KTW",
         "elo": 970.9728279493283,
         "weights": {
             "piece_value": 9.287054887337725,
@@ -477,11 +477,11 @@
         },
         "generation": 0,
         "creation_order": 58,
-        "dna": "QOW"
+        "dna": "KTW"
     },
     {
         "id": 24,
-        "name": "000024VXC",
+        "name": "000024LDC",
         "elo": 969.7835158368752,
         "weights": {
             "piece_value": 11.481221683928004,
@@ -492,11 +492,11 @@
         },
         "generation": 0,
         "creation_order": 24,
-        "dna": "VXC"
+        "dna": "LDC"
     },
     {
         "id": 96,
-        "name": "000096TRE",
+        "name": "000096ODE",
         "elo": 967.9199379394487,
         "weights": {
             "piece_value": 9.968749689285572,
@@ -507,11 +507,11 @@
         },
         "generation": 0,
         "creation_order": 96,
-        "dna": "TRE"
+        "dna": "ODE"
     },
     {
         "id": 85,
-        "name": "000085WUE",
+        "name": "000085CCE",
         "elo": 966.1665968550448,
         "weights": {
             "piece_value": 9.631264437178233,
@@ -522,11 +522,11 @@
         },
         "generation": 0,
         "creation_order": 85,
-        "dna": "WUE"
+        "dna": "CCE"
     },
     {
         "id": 97,
-        "name": "000097VXK",
+        "name": "000097DNK",
         "elo": 966.0387534338585,
         "weights": {
             "piece_value": 9.550187148905389,
@@ -537,11 +537,11 @@
         },
         "generation": 0,
         "creation_order": 97,
-        "dna": "VXK"
+        "dna": "DNK"
     },
     {
         "id": 25,
-        "name": "000025NEY",
+        "name": "000025RVY",
         "elo": 964.9269809383912,
         "weights": {
             "piece_value": 9.069463537654912,
@@ -552,11 +552,11 @@
         },
         "generation": 0,
         "creation_order": 25,
-        "dna": "NEY"
+        "dna": "RVY"
     },
     {
         "id": 13,
-        "name": "000013SHT",
+        "name": "000013SET",
         "elo": 963.2892882287399,
         "weights": {
             "piece_value": 11.606432805373592,
@@ -567,11 +567,11 @@
         },
         "generation": 0,
         "creation_order": 13,
-        "dna": "SHT"
+        "dna": "SET"
     },
     {
         "id": 92,
-        "name": "000092SRY",
+        "name": "000092IXY",
         "elo": 961.8327624077417,
         "weights": {
             "piece_value": 11.136218785940038,
@@ -582,11 +582,11 @@
         },
         "generation": 0,
         "creation_order": 92,
-        "dna": "SRY"
+        "dna": "IXY"
     },
     {
         "id": 36,
-        "name": "000036IQD",
+        "name": "000036DED",
         "elo": 961.6154629245026,
         "weights": {
             "piece_value": 9.422568596881439,
@@ -597,11 +597,11 @@
         },
         "generation": 0,
         "creation_order": 36,
-        "dna": "IQD"
+        "dna": "DED"
     },
     {
         "id": 65,
-        "name": "000065XBK",
+        "name": "000065IZK",
         "elo": 957.8298942093447,
         "weights": {
             "piece_value": 11.832433966745109,
@@ -612,11 +612,11 @@
         },
         "generation": 0,
         "creation_order": 65,
-        "dna": "XBK"
+        "dna": "IZK"
     },
     {
         "id": 68,
-        "name": "000068WON",
+        "name": "000068QLN",
         "elo": 956.7787931140283,
         "weights": {
             "piece_value": 11.602782789073828,
@@ -627,11 +627,11 @@
         },
         "generation": 0,
         "creation_order": 68,
-        "dna": "WON"
+        "dna": "QLN"
     },
     {
         "id": 50,
-        "name": "000050DHC",
+        "name": "000050FOC",
         "elo": 955.6840870526049,
         "weights": {
             "piece_value": 8.903579305108519,
@@ -642,11 +642,11 @@
         },
         "generation": 0,
         "creation_order": 50,
-        "dna": "DHC"
+        "dna": "FOC"
     },
     {
         "id": 64,
-        "name": "000064VKE",
+        "name": "000064PFE",
         "elo": 952.0676508818387,
         "weights": {
             "piece_value": 10.13301726990559,
@@ -657,11 +657,11 @@
         },
         "generation": 0,
         "creation_order": 64,
-        "dna": "VKE"
+        "dna": "PFE"
     },
     {
         "id": 12,
-        "name": "000012YYA",
+        "name": "000012ZTA",
         "elo": 951.3485512904876,
         "weights": {
             "piece_value": 8.245908903682572,
@@ -672,11 +672,11 @@
         },
         "generation": 0,
         "creation_order": 12,
-        "dna": "YYA"
+        "dna": "ZTA"
     },
     {
         "id": 60,
-        "name": "000060EHX",
+        "name": "000060YUX",
         "elo": 950.2648316057911,
         "weights": {
             "piece_value": 8.254783569332792,
@@ -687,11 +687,11 @@
         },
         "generation": 0,
         "creation_order": 60,
-        "dna": "EHX"
+        "dna": "YUX"
     },
     {
         "id": 99,
-        "name": "000099BOB",
+        "name": "000099NMB",
         "elo": 948.4324389817207,
         "weights": {
             "piece_value": 9.5892890987109,
@@ -702,11 +702,11 @@
         },
         "generation": 0,
         "creation_order": 99,
-        "dna": "BOB"
+        "dna": "NMB"
     },
     {
         "id": 33,
-        "name": "000033YJG",
+        "name": "000033HBG",
         "elo": 944.4911040831635,
         "weights": {
             "piece_value": 8.243827251364506,
@@ -717,11 +717,11 @@
         },
         "generation": 0,
         "creation_order": 33,
-        "dna": "YJG"
+        "dna": "HBG"
     },
     {
         "id": 71,
-        "name": "000071MPQ",
+        "name": "000071UNQ",
         "elo": 936.3197705382456,
         "weights": {
             "piece_value": 8.257325784260313,
@@ -732,11 +732,11 @@
         },
         "generation": 0,
         "creation_order": 71,
-        "dna": "MPQ"
+        "dna": "UNQ"
     },
     {
         "id": 48,
-        "name": "000048SFU",
+        "name": "000048IWU",
         "elo": 923.9017151410271,
         "weights": {
             "piece_value": 9.762420205258616,
@@ -747,6 +747,696 @@
         },
         "generation": 0,
         "creation_order": 48,
-        "dna": "SFU"
+        "dna": "IWU"
+    },
+    {
+        "id": 18,
+        "name": "000018DVM",
+        "elo": 1010.1281197031523,
+        "weights": {
+            "piece_value": 9.716988922292618,
+            "dama_value": 32.2626439179828,
+            "advancement_bonus": 0.4866796346484956,
+            "center_control_bonus": 0.21507836159951896,
+            "defensive_bonus": 0.201268099464255
+        },
+        "generation": 0,
+        "creation_order": 18,
+        "dna": "DVM"
+    },
+    {
+        "id": 37,
+        "name": "000037HSJ",
+        "elo": 1008.5372231164395,
+        "weights": {
+            "piece_value": 9.948669353704895,
+            "dama_value": 29.35268078438961,
+            "advancement_bonus": 0.2868629084140799,
+            "center_control_bonus": 0.3593972532003358,
+            "defensive_bonus": 0.3684366393117243
+        },
+        "generation": 0,
+        "creation_order": 37,
+        "dna": "HSJ"
+    },
+    {
+        "id": 17,
+        "name": "000017HUN",
+        "elo": 1008.0067415905659,
+        "weights": {
+            "piece_value": 8.252341973965908,
+            "dama_value": 31.187872231906674,
+            "advancement_bonus": 0.4232316783309731,
+            "center_control_bonus": 0.5883563466882779,
+            "defensive_bonus": 0.1239641386853266
+        },
+        "generation": 0,
+        "creation_order": 17,
+        "dna": "HUN"
+    },
+    {
+        "id": 57,
+        "name": "000057PZE",
+        "elo": 1007.6902630265954,
+        "weights": {
+            "piece_value": 9.719929562070208,
+            "dama_value": 29.60744448431639,
+            "advancement_bonus": 0.5653768932944073,
+            "center_control_bonus": 0.46880243857304504,
+            "defensive_bonus": 0.1694969506951966
+        },
+        "generation": 0,
+        "creation_order": 57,
+        "dna": "PZE"
+    },
+    {
+        "id": 82,
+        "name": "000082ETT",
+        "elo": 1002.007040587041,
+        "weights": {
+            "piece_value": 9.246478384633644,
+            "dama_value": 26.839215667231063,
+            "advancement_bonus": 0.20845363574674122,
+            "center_control_bonus": 0.1937907077810657,
+            "defensive_bonus": 0.3558005748560462
+        },
+        "generation": 0,
+        "creation_order": 82,
+        "dna": "ETT"
+    },
+    {
+        "id": 39,
+        "name": "000039QCA",
+        "elo": 1001.9783433679745,
+        "weights": {
+            "piece_value": 9.16662761691823,
+            "dama_value": 31.631516125723902,
+            "advancement_bonus": 0.25161798271751756,
+            "center_control_bonus": 0.5767889073029931,
+            "defensive_bonus": 0.25147526532891945
+        },
+        "generation": 0,
+        "creation_order": 39,
+        "dna": "QCA"
+    },
+    {
+        "id": 8,
+        "name": "000008SNP",
+        "elo": 1001.2044047212188,
+        "weights": {
+            "piece_value": 8.32805307050122,
+            "dama_value": 29.5569382879464,
+            "advancement_bonus": 0.19641189295512232,
+            "center_control_bonus": 0.3298373171567486,
+            "defensive_bonus": 0.2200568678780246
+        },
+        "generation": 0,
+        "creation_order": 8,
+        "dna": "SNP"
+    },
+    {
+        "id": 69,
+        "name": "000069THK",
+        "elo": 1000.9498010210114,
+        "weights": {
+            "piece_value": 9.903162128709393,
+            "dama_value": 28.067670691474472,
+            "advancement_bonus": 0.49688294374477626,
+            "center_control_bonus": 0.5785791041264778,
+            "defensive_bonus": 0.36626388387572295
+        },
+        "generation": 0,
+        "creation_order": 69,
+        "dna": "THK"
+    },
+    {
+        "id": 38,
+        "name": "000038TUT",
+        "elo": 996.444205248494,
+        "weights": {
+            "piece_value": 9.100334799577269,
+            "dama_value": 28.651056970157928,
+            "advancement_bonus": 0.3668464356771395,
+            "center_control_bonus": 0.4112589762972154,
+            "defensive_bonus": 0.11200661121694794
+        },
+        "generation": 0,
+        "creation_order": 38,
+        "dna": "TUT"
+    },
+    {
+        "id": 76,
+        "name": "000076VSL",
+        "elo": 996.3658465767286,
+        "weights": {
+            "piece_value": 8.89290636825305,
+            "dama_value": 32.541731139752486,
+            "advancement_bonus": 0.49508689574601317,
+            "center_control_bonus": 0.13867026560670478,
+            "defensive_bonus": 0.19831889390457147
+        },
+        "generation": 0,
+        "creation_order": 76,
+        "dna": "VSL"
+    },
+    {
+        "id": 83,
+        "name": "000083DHU",
+        "elo": 994.072811634334,
+        "weights": {
+            "piece_value": 11.023888014682168,
+            "dama_value": 32.84279468174728,
+            "advancement_bonus": 0.33559342608311793,
+            "center_control_bonus": 0.5488389281044742,
+            "defensive_bonus": 0.30845618962841004
+        },
+        "generation": 0,
+        "creation_order": 83,
+        "dna": "DHU"
+    },
+    {
+        "id": 74,
+        "name": "000074VFC",
+        "elo": 990.2796285703296,
+        "weights": {
+            "piece_value": 10.735543434293229,
+            "dama_value": 25.561764794476616,
+            "advancement_bonus": 0.3758387825603088,
+            "center_control_bonus": 0.18350117797543677,
+            "defensive_bonus": 0.1718811293623338
+        },
+        "generation": 0,
+        "creation_order": 74,
+        "dna": "VFC"
+    },
+    {
+        "id": 10,
+        "name": "000010TXT",
+        "elo": 982.4927885677341,
+        "weights": {
+            "piece_value": 10.632088250152066,
+            "dama_value": 27.490054972489865,
+            "advancement_bonus": 0.15189448820772664,
+            "center_control_bonus": 0.5962807142843656,
+            "defensive_bonus": 0.31866042887929746
+        },
+        "generation": 0,
+        "creation_order": 10,
+        "dna": "TXT"
+    },
+    {
+        "id": 77,
+        "name": "000077YBL",
+        "elo": 975.7789288005164,
+        "weights": {
+            "piece_value": 8.818609324735494,
+            "dama_value": 29.510074621396754,
+            "advancement_bonus": 0.5570198686779182,
+            "center_control_bonus": 0.5473974118955562,
+            "defensive_bonus": 0.16263307137513697
+        },
+        "generation": 0,
+        "creation_order": 77,
+        "dna": "YBL"
+    },
+    {
+        "id": 61,
+        "name": "000061GXA",
+        "elo": 973.2415971783827,
+        "weights": {
+            "piece_value": 9.255538066825451,
+            "dama_value": 31.52288647843383,
+            "advancement_bonus": 0.5795994908660768,
+            "center_control_bonus": 0.5952478637180353,
+            "defensive_bonus": 0.20224880310797994
+        },
+        "generation": 0,
+        "creation_order": 61,
+        "dna": "GXA"
+    },
+    {
+        "id": 41,
+        "name": "000041ZUM",
+        "elo": 972.682880807314,
+        "weights": {
+            "piece_value": 10.49449679003816,
+            "dama_value": 32.820194228311834,
+            "advancement_bonus": 0.3769847019520721,
+            "center_control_bonus": 0.3389835000472382,
+            "defensive_bonus": 0.25693767261143624
+        },
+        "generation": 0,
+        "creation_order": 41,
+        "dna": "ZUM"
+    },
+    {
+        "id": 93,
+        "name": "000093CQH",
+        "elo": 968.1532289823967,
+        "weights": {
+            "piece_value": 11.51838474808921,
+            "dama_value": 32.81314794685573,
+            "advancement_bonus": 0.44775685900934337,
+            "center_control_bonus": 0.10829993077482167,
+            "defensive_bonus": 0.35969019869648244
+        },
+        "generation": 0,
+        "creation_order": 93,
+        "dna": "CQH"
+    },
+    {
+        "id": 15,
+        "name": "000015VNZ",
+        "elo": 959.4087540527704,
+        "weights": {
+            "piece_value": 8.7456333843106,
+            "dama_value": 28.977954895475076,
+            "advancement_bonus": 0.4280168253776564,
+            "center_control_bonus": 0.1989359710340072,
+            "defensive_bonus": 0.343051065426492
+        },
+        "generation": 0,
+        "creation_order": 15,
+        "dna": "VNZ"
+    },
+    {
+        "id": 7,
+        "name": "000007GXI",
+        "elo": 956.4686748149172,
+        "weights": {
+            "piece_value": 10.567958065201651,
+            "dama_value": 34.794002497981296,
+            "advancement_bonus": 0.4319121262866946,
+            "center_control_bonus": 0.32343086574825686,
+            "defensive_bonus": 0.08001411700167897
+        },
+        "generation": 0,
+        "creation_order": 7,
+        "dna": "GXI"
+    },
+    {
+        "id": 94,
+        "name": "000094VQK",
+        "elo": 931.9876306735407,
+        "weights": {
+            "piece_value": 11.406029749940517,
+            "dama_value": 29.072407830936882,
+            "advancement_bonus": 0.10083242992754718,
+            "center_control_bonus": 0.31877401695388785,
+            "defensive_bonus": 0.11222003484035648
+        },
+        "generation": 0,
+        "creation_order": 94,
+        "dna": "VQK"
+    },
+    {
+        "id": 70,
+        "name": "000070XTD",
+        "elo": 1020.0217512372067,
+        "weights": {
+            "piece_value": 10.878669679372527,
+            "dama_value": 26.825407998928988,
+            "advancement_bonus": 0.14319656431312336,
+            "center_control_bonus": 0.39955798568494705,
+            "defensive_bonus": 0.25403573836728277
+        },
+        "generation": 0,
+        "creation_order": 70,
+        "dna": "XTD"
+    },
+    {
+        "id": 29,
+        "name": "000029HRL",
+        "elo": 1018.6090299525678,
+        "weights": {
+            "piece_value": 11.246488746677919,
+            "dama_value": 33.4097714651777,
+            "advancement_bonus": 0.294779298759397,
+            "center_control_bonus": 0.2735504272924373,
+            "defensive_bonus": 0.35824205351828947
+        },
+        "generation": 0,
+        "creation_order": 29,
+        "dna": "HRL"
+    },
+    {
+        "id": 22,
+        "name": "000022QTB",
+        "elo": 1011.9172238970224,
+        "weights": {
+            "piece_value": 8.852329935974085,
+            "dama_value": 25.531294361442278,
+            "advancement_bonus": 0.37114862316580766,
+            "center_control_bonus": 0.13585538895645857,
+            "defensive_bonus": 0.15733255265271906
+        },
+        "generation": 0,
+        "creation_order": 22,
+        "dna": "QTB"
+    },
+    {
+        "id": 3,
+        "name": "000003CXM",
+        "elo": 1010.6167945924716,
+        "weights": {
+            "piece_value": 9.73315597790906,
+            "dama_value": 27.008827531418167,
+            "advancement_bonus": 0.4380352294536478,
+            "center_control_bonus": 0.4279062160963343,
+            "defensive_bonus": 0.1512164741403221
+        },
+        "generation": 0,
+        "creation_order": 3,
+        "dna": "CXM"
+    },
+    {
+        "id": 31,
+        "name": "000031WKZ",
+        "elo": 1005.2547106567753,
+        "weights": {
+            "piece_value": 9.973011140103925,
+            "dama_value": 32.69751707002442,
+            "advancement_bonus": 0.3126487058064652,
+            "center_control_bonus": 0.17912431452151498,
+            "defensive_bonus": 0.11339709433250542
+        },
+        "generation": 0,
+        "creation_order": 31,
+        "dna": "WKZ"
+    },
+    {
+        "id": 47,
+        "name": "000047JKO",
+        "elo": 995.5471470911502,
+        "weights": {
+            "piece_value": 10.908741394517806,
+            "dama_value": 25.33380628664628,
+            "advancement_bonus": 0.19421014135807288,
+            "center_control_bonus": 0.23991787168890125,
+            "defensive_bonus": 0.2945778659836154
+        },
+        "generation": 0,
+        "creation_order": 47,
+        "dna": "JKO"
+    },
+    {
+        "id": 88,
+        "name": "000088LHS",
+        "elo": 987.3008278859187,
+        "weights": {
+            "piece_value": 11.207359870764808,
+            "dama_value": 31.73701322117735,
+            "advancement_bonus": 0.132801177838712,
+            "center_control_bonus": 0.4089127315116051,
+            "defensive_bonus": 0.12414029350541671
+        },
+        "generation": 0,
+        "creation_order": 88,
+        "dna": "LHS"
+    },
+    {
+        "id": 4,
+        "name": "000004WPQ",
+        "elo": 984.2377152324286,
+        "weights": {
+            "piece_value": 11.147680378602107,
+            "dama_value": 33.463250088337325,
+            "advancement_bonus": 0.3207615165698984,
+            "center_control_bonus": 0.40566246303779796,
+            "defensive_bonus": 0.05008138191871696
+        },
+        "generation": 0,
+        "creation_order": 4,
+        "dna": "WPQ"
+    },
+    {
+        "id": 35,
+        "name": "000035ODB",
+        "elo": 981.4110270436992,
+        "weights": {
+            "piece_value": 10.017110916200663,
+            "dama_value": 26.488993849596135,
+            "advancement_bonus": 0.13423564702942972,
+            "center_control_bonus": 0.519520001887774,
+            "defensive_bonus": 0.3392304089251873
+        },
+        "generation": 0,
+        "creation_order": 35,
+        "dna": "ODB"
+    },
+    {
+        "id": 32,
+        "name": "000032MOO",
+        "elo": 974.0866718796187,
+        "weights": {
+            "piece_value": 8.501722852932343,
+            "dama_value": 33.37572793834107,
+            "advancement_bonus": 0.26614616412252,
+            "center_control_bonus": 0.12209442265380174,
+            "defensive_bonus": 0.18199007814829177
+        },
+        "generation": 0,
+        "creation_order": 32,
+        "dna": "MOO"
+    },
+    {
+        "id": 49,
+        "name": "000049UCN",
+        "elo": 969.68452115416,
+        "weights": {
+            "piece_value": 11.906562623388105,
+            "dama_value": 31.016584750278316,
+            "advancement_bonus": 0.19420801010766373,
+            "center_control_bonus": 0.4878240465334599,
+            "defensive_bonus": 0.09151879441538871
+        },
+        "generation": 0,
+        "creation_order": 49,
+        "dna": "UCN"
+    },
+    {
+        "id": 62,
+        "name": "000062XXE",
+        "elo": 964.1407140663833,
+        "weights": {
+            "piece_value": 8.104080648450235,
+            "dama_value": 30.95434835503733,
+            "advancement_bonus": 0.2986511512265252,
+            "center_control_bonus": 0.40389021030350747,
+            "defensive_bonus": 0.18299726834042918
+        },
+        "generation": 0,
+        "creation_order": 62,
+        "dna": "XXE"
+    },
+    {
+        "id": 20,
+        "name": "000020YNO",
+        "elo": 942.5453687657318,
+        "weights": {
+            "piece_value": 10.434481492279236,
+            "dama_value": 27.927684480187818,
+            "advancement_bonus": 0.33430364717218275,
+            "center_control_bonus": 0.17855808061814768,
+            "defensive_bonus": 0.23567992376391705
+        },
+        "generation": 0,
+        "creation_order": 20,
+        "dna": "YNO"
+    },
+    {
+        "id": 84,
+        "name": "000084QHB",
+        "elo": 1026.0003559368076,
+        "weights": {
+            "piece_value": 11.875132479500474,
+            "dama_value": 29.09969094404766,
+            "advancement_bonus": 0.3329630576100082,
+            "center_control_bonus": 0.33595015936532513,
+            "defensive_bonus": 0.33043962597058196
+        },
+        "generation": 0,
+        "creation_order": 84,
+        "dna": "QHB"
+    },
+    {
+        "id": 6,
+        "name": "000006XFU",
+        "elo": 1008.014093470929,
+        "weights": {
+            "piece_value": 9.1174377283992,
+            "dama_value": 26.844512566422775,
+            "advancement_bonus": 0.3040776788205146,
+            "center_control_bonus": 0.20703801923035278,
+            "defensive_bonus": 0.3315234437862304
+        },
+        "generation": 0,
+        "creation_order": 6,
+        "dna": "XFU"
+    },
+    {
+        "id": 79,
+        "name": "000079VVT",
+        "elo": 1007.5027712079817,
+        "weights": {
+            "piece_value": 10.880577491804576,
+            "dama_value": 30.716491279338207,
+            "advancement_bonus": 0.26232308037573493,
+            "center_control_bonus": 0.18894270109567748,
+            "defensive_bonus": 0.17843880675341822
+        },
+        "generation": 0,
+        "creation_order": 79,
+        "dna": "VVT"
+    },
+    {
+        "id": 72,
+        "name": "000072OFQ",
+        "elo": 994.6047574790837,
+        "weights": {
+            "piece_value": 10.339012455342587,
+            "dama_value": 32.91310814973971,
+            "advancement_bonus": 0.1892584139520996,
+            "center_control_bonus": 0.11817189474743614,
+            "defensive_bonus": 0.16203601126665967
+        },
+        "generation": 0,
+        "creation_order": 72,
+        "dna": "OFQ"
+    },
+    {
+        "id": 5,
+        "name": "000005QQH",
+        "elo": 985.4602194481188,
+        "weights": {
+            "piece_value": 9.839176378185728,
+            "dama_value": 34.45836094911648,
+            "advancement_bonus": 0.3779759826670963,
+            "center_control_bonus": 0.5301008549500513,
+            "defensive_bonus": 0.17970007397564558
+        },
+        "generation": 0,
+        "creation_order": 5,
+        "dna": "QQH"
+    },
+    {
+        "id": 11,
+        "name": "000011JLF",
+        "elo": 984.7628905114817,
+        "weights": {
+            "piece_value": 9.622912057805403,
+            "dama_value": 29.961866800650007,
+            "advancement_bonus": 0.4496311252377756,
+            "center_control_bonus": 0.4385037635778023,
+            "defensive_bonus": 0.2520644050499651
+        },
+        "generation": 0,
+        "creation_order": 11,
+        "dna": "JLF"
+    },
+    {
+        "id": 21,
+        "name": "000021HJS",
+        "elo": 1003.6579325390177,
+        "weights": {
+            "piece_value": 8.275741516672001,
+            "dama_value": 28.277130885172415,
+            "advancement_bonus": 0.3659749051979133,
+            "center_control_bonus": 0.23147839865489275,
+            "defensive_bonus": 0.13853544538401194
+        },
+        "generation": 0,
+        "creation_order": 21,
+        "dna": "HJS"
+    },
+    {
+        "id": 26,
+        "name": "000026PJX",
+        "elo": 976.5444687390138,
+        "weights": {
+            "piece_value": 9.378468550754148,
+            "dama_value": 30.20973866757754,
+            "advancement_bonus": 0.5878457135108436,
+            "center_control_bonus": 0.5327427860795377,
+            "defensive_bonus": 0.23895757006760637
+        },
+        "generation": 0,
+        "creation_order": 26,
+        "dna": "PJX"
+    },
+    {
+        "id": 27,
+        "name": "000027UBR",
+        "elo": 1036.2559675692205,
+        "weights": {
+            "piece_value": 10.88159231459354,
+            "dama_value": 34.74969499898245,
+            "advancement_bonus": 0.2810378972616425,
+            "center_control_bonus": 0.4885833052339468,
+            "defensive_bonus": 0.16602411643168968
+        },
+        "generation": 0,
+        "creation_order": 27,
+        "dna": "UBR"
+    },
+    {
+        "id": 66,
+        "name": "000066TNS",
+        "elo": 1021.1658916514551,
+        "weights": {
+            "piece_value": 11.120814425723879,
+            "dama_value": 30.437891735173928,
+            "advancement_bonus": 0.43798257845781674,
+            "center_control_bonus": 0.36250961303499685,
+            "defensive_bonus": 0.36719422542174557
+        },
+        "generation": 0,
+        "creation_order": 66,
+        "dna": "TNS"
+    },
+    {
+        "id": 1,
+        "name": "000001PKG",
+        "elo": 1039.6168258284488,
+        "weights": {
+            "piece_value": 11.748158532121808,
+            "dama_value": 32.31043824826204,
+            "advancement_bonus": 0.5186767068941162,
+            "center_control_bonus": 0.1781387586389733,
+            "defensive_bonus": 0.24213298131706973
+        },
+        "generation": 0,
+        "creation_order": 1,
+        "dna": "PKG"
+    },
+    {
+        "id": 59,
+        "name": "000059NSJ",
+        "elo": 1031.5728813554551,
+        "weights": {
+            "piece_value": 8.633500092020551,
+            "dama_value": 31.733931803919578,
+            "advancement_bonus": 0.38189339608682027,
+            "center_control_bonus": 0.21394525528320704,
+            "defensive_bonus": 0.06043623814184576
+        },
+        "generation": 0,
+        "creation_order": 59,
+        "dna": "NSJ"
+    },
+    {
+        "id": 90,
+        "name": "000090HBH",
+        "elo": 1042.517835170705,
+        "weights": {
+            "piece_value": 8.136206006718146,
+            "dama_value": 29.02585364182374,
+            "advancement_bonus": 0.46761512084073,
+            "center_control_bonus": 0.15574837138896877,
+            "defensive_bonus": 0.06882423324081188
+        },
+        "generation": 0,
+        "creation_order": 90,
+        "dna": "HBH"
     }
 ]
