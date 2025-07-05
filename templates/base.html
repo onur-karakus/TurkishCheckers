@@ -1,20 +1,15 @@
+<!-- templates/base.html -->
 <!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Başlık, her sayfada özelleştirilebilir -->
-    <title>{% block title %}Türk Daması{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <!-- Oyun durumu, sadece oyun sayfalarında eklenir -->
-    {% block game_state_script %}{% endblock %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    {% block head %}{% endblock %}
 </head>
-<body class="{% block body_class %}{% endblock %}">
-
-    <!-- Sayfa içeriği, her sayfada özelleştirilir -->
-    {% block content %}{% endblock %}
-
-    <!-- JavaScript dosyaları -->
-    {% block scripts %}{% endblock %}
+<body>
+    {% block body %}{% endblock %}
 </body>
 </html>

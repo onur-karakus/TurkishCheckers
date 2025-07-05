@@ -1,152 +1,170 @@
 // static/js/game.js
+document.addEventListener('DOMContentLoaded', () => {
+    const boardElement = document.getElementById('board');
+    const newGameBtn = document.getElementById('new-game-btn');
+    const modalNewGameBtn = document.getElementById('modal-new-game');
+    
+    let boardState = [], currentPlayer = '', validMoves = [], selectedPiece = null;
+    const PIECES = { W_MAN: 1, B_MAN: 2, W_KING: 3, B_KING: 4 };
 
-import APIClient from './api.js';
-import UIManager from './ui.js';
+    function getPieceColor(p) { return (p === 1 || p === 3) ? 'white' : 'black'; }
+    function isKing(p) { return p === 3 || p === 4; }
 
-/**
- * Oyunun ana mantığını, durumunu ve akışını yönetir.
- * API ve UI modüllerini bir araya getirir.
- */
-export default class Game {
-    constructor(initialGameState) {
-        this.gameState = initialGameState;
-        this.isRequestPending = false;
-        this.analysisInterval = null;
-        this.isAnalysisRunning = false;
-        this.ui = new UIManager();
-        this.api = new APIClient();
+    // --- BAŞLANGIÇ: Arayüz Güncelleme Yardımcı Fonksiyonu ---
+    function updateUI(state) {
+        if (!state) return;
+        boardState = state.board;
+        currentPlayer = state.currentPlayer;
+        validMoves = state.validMoves;
+
+        drawBoard();
+        updateInfoPanel(state);
+        updateEvaluation(state.evaluation);
+        updateCapturedPieces(state.capturedByWhite, state.capturedByBlack);
+        updateNotation(state.move_history);
+
+        if (state.gameOver) {
+            handleGameOver(state);
+        }
+    }
+    // --- SON: Arayüz Güncelleme Yardımcı Fonksiyonu ---
+
+    async function updateGameState() {
+        try {
+            const response = await fetch('/state');
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const state = await response.json();
+            updateUI(state);
+        } catch (error) {
+            console.error('Oyun durumu alınamadı:', error);
+            const gameStatusElement = document.getElementById('game-status');
+            if(gameStatusElement) gameStatusElement.textContent = "Sunucuyla bağlantı kurulamadı.";
+        }
     }
 
-    async init() {
-        this.bindEvents();
-        await this.updateFullUI(this.gameState);
+    function drawBoard() {
+        if (!boardElement) return;
+        boardElement.innerHTML = '';
+        const mandatoryStartPositions = validMoves.map(move => `${move.path[0][0]},${move.path[0][1]}`);
+        for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+                const square = document.createElement('div');
+                square.classList.add('square', (r + c) % 2 === 0 ? 'light' : 'dark');
+                square.dataset.r = r; square.dataset.c = c;
+                const pieceType = boardState[r][c];
+                if (pieceType !== 0) {
+                    const piece = document.createElement('div');
+                    piece.classList.add('piece', getPieceColor(pieceType));
+                    if (isKing(pieceType)) piece.classList.add('king');
+                    if (getPieceColor(pieceType) === currentPlayer && mandatoryStartPositions.includes(`${r},${c}`)) { piece.classList.add('mandatory'); }
+                    square.appendChild(piece);
+                }
+                boardElement.appendChild(square);
+            }
+        }
+        highlightValidMoves();
     }
 
-    bindEvents() {
-        // DÜZELTME: Panel olayları için dinleyiciyi etkinleştir.
-        this.ui.bindPanelEvents();
-        
-        document.getElementById('start-game-btn')?.addEventListener('click', () => this.handleStartNewGame());
-        document.getElementById('resign-btn')?.addEventListener('click', () => this.handleResign());
-        this.ui.elements.board?.addEventListener('click', (e) => this.handleSquareClick(e));
-        window.addEventListener('resize', () => this.ui.calculateSquarePositions());
+    function highlightValidMoves() {
+        if (!boardElement) return;
+        document.querySelectorAll('.selected, .valid-move').forEach(el => el.classList.remove('selected', 'valid-move'));
+        if (!selectedPiece) return;
+        const pieceElement = boardElement.querySelector(`[data-r='${selectedPiece.r}'][data-c='${selectedPiece.c}'] .piece`);
+        if (pieceElement) pieceElement.classList.add('selected');
+        const possibleEndPositions = validMoves.filter(move => move.path[0][0] === selectedPiece.r && move.path[0][1] === selectedPiece.c).map(move => move.path[move.path.length - 1]);
+        possibleEndPositions.forEach(([r, c]) => {
+            const square = boardElement.querySelector(`[data-r='${r}'][data-c='${c}']`);
+            if (square) square.classList.add('valid-move');
+        });
     }
 
-    async handleStartNewGame() {
-        if (this.isRequestPending) return;
-        this.isRequestPending = true;
-        this.stopBackgroundAnalysis();
-        const settings = {
-            mode: this.gameState.mode,
-            difficulty: this.ui.elements.difficultySlider.value,
-            player_color: document.querySelector('.color-option.active').dataset.color
-        };
-        const data = await this.api.startGame(settings);
-        this.isRequestPending = false;
-        if (data) await this.updateFullUI(data);
+    function updateInfoPanel(state) {
+        const turnInfoElement = document.getElementById('turn-info'); const gameStatusElement = document.getElementById('game-status');
+        if (!turnInfoElement || !gameStatusElement) return;
+        turnInfoElement.textContent = `Sıra: ${state.currentPlayer === 'white' ? 'Beyaz' : 'Siyah'}`;
+        gameStatusElement.textContent = (validMoves.length > 0 && validMoves[0].captured.length > 0 && state.currentPlayer === 'white') ? 'Zorunlu hamle var!' : '';
     }
 
-    async handleResign() {
-        if (this.isRequestPending) return;
-        this.isRequestPending = true;
-        this.stopBackgroundAnalysis();
-        const data = await this.api.resignGame();
-        this.isRequestPending = false;
-        if (data) await this.updateFullUI(data);
+    function updateCapturedPieces(whiteCaptures, blackCaptures) {
+        const whiteCapturedElement = document.querySelector('#white-captured .captured-pieces'); const blackCapturedElement = document.querySelector('#black-captured .captured-pieces');
+        if (!whiteCapturedElement || !blackCapturedElement) return;
+        whiteCapturedElement.innerHTML = '';
+        for (let i = 0; i < whiteCaptures; i++) { const captured = document.createElement('div'); captured.className = 'captured-piece piece black'; whiteCapturedElement.appendChild(captured); }
+        blackCapturedElement.innerHTML = '';
+        for (let i = 0; i < blackCaptures; i++) { const captured = document.createElement('div'); captured.className = 'captured-piece piece white'; blackCapturedElement.appendChild(captured); }
     }
 
-    async handleSquareClick(e) {
-        if (!this.isHumanTurn() || this.isRequestPending) return;
+    function updateEvaluation(percentage) {
+        const evalBarWhite = document.getElementById('eval-bar-white'); const evalBarBlack = document.getElementById('eval-bar-black'); const evalText = document.getElementById('eval-text');
+        if (!evalBarWhite || !evalBarBlack || !evalText) return;
+        const whitePercentage = Math.round(percentage); const blackPercentage = 100 - whitePercentage;
+        evalBarWhite.style.width = `${whitePercentage}%`; evalBarBlack.style.width = `${blackPercentage}%`; evalText.textContent = `${whitePercentage}%`;
+    }
+
+    function updateNotation(history) {
+        const notationList = document.getElementById('notation-list');
+        if (!notationList || !history) return;
+        notationList.innerHTML = '';
+        history.forEach(move => {
+            const li = document.createElement('li');
+            li.textContent = move;
+            notationList.appendChild(li);
+        });
+        notationList.scrollTop = notationList.scrollHeight;
+    }
+
+    async function handleSquareClick(e) {
+        if (currentPlayer !== 'white') return;
         const square = e.target.closest('.square');
         if (!square) return;
-        this.stopBackgroundAnalysis();
-        if (this.ui.selectedSquare) {
-            if (square.classList.contains('valid-move')) {
-                const startPos = {row: parseInt(this.ui.selectedSquare.dataset.row), col: parseInt(this.ui.selectedSquare.dataset.col)};
-                const endPos = {row: parseInt(square.dataset.row), col: parseInt(square.dataset.col)};
-                this.ui.clearSelection();
-                this.isRequestPending = true;
-                const data = await this.api.playMove(startPos, endPos);
-                this.isRequestPending = false;
-                if (data) await this.processNewGameState(data);
-            } else {
-                this.ui.clearSelection();
-            }
-        } else {
-            const piece = square.querySelector('.piece');
-            if (piece && piece.className.includes(this.gameState.current_player === 'W' ? 'white' : 'black')) {
-                this.ui.selectSquare(square);
-                const { row, col } = {row: parseInt(square.dataset.row), col: parseInt(square.dataset.col)};
-                const data = await this.api.fetchValidMoves(row, col);
-                if (data && data.moves) this.ui.highlightValidMoves(data.moves);
-                else this.ui.clearSelection();
-            }
+        const r = parseInt(square.dataset.r); const c = parseInt(square.dataset.c);
+        if (selectedPiece) {
+            const move = validMoves.find(m => m.path[0][0] === selectedPiece.r && m.path[0][1] === selectedPiece.c && m.path[m.path.length - 1][0] === r && m.path[m.path.length - 1][1] === c);
+            if (move) { await sendMove(move); selectedPiece = null; return; }
         }
-    }
-
-    async processNewGameState(data) {
-        const isAnimationNeeded = data.move_path && data.move_path.length > 0;
-        if (isAnimationNeeded) await this.ui.animateMove(data);
-        await this.updateFullUI(data);
-    }
-
-    async checkAITurn() {
-        if (this.isHumanTurn() || !this.gameState.is_active || this.gameState.game_over || this.isRequestPending) return;
-        this.isRequestPending = true;
-        this.stopBackgroundAnalysis();
-        this.ui.clearArrow();
-        this.ui.updateMessage("Bilgisayar düşünüyor...", true);
-        const data = await this.api.fetchAIMove();
-        this.isRequestPending = false;
-        if (data) await this.processNewGameState(data);
-    }
-
-    async updateFullUI(data) {
-        this.gameState = data;
-        this.ui.updateUIState(this.gameState);
-        await this.ui.drawBoard(this.gameState.board);
-        this.ui.updateMessage(this.gameState.message);
-        this.ui.updatePlayerIndicators(this.gameState);
-        this.ui.updateNotationPanel(this.gameState.move_notations);
-        if (this.gameState.is_active && !this.gameState.game_over) {
-            if (this.gameState.analysis) {
-                this.ui.updateAnalysisPanel(this.gameState.analysis, this.gameState.current_player);
-            }
-            if (this.isHumanTurn()) {
-                this.startBackgroundAnalysis();
-            } else {
-                this.checkAITurn();
-            }
+        selectedPiece = null;
+        const pieceType = boardState[r][c];
+        if (pieceType !== 0 && getPieceColor(pieceType) === currentPlayer) {
+            const isSelectable = validMoves.some(m => m.path[0][0] === r && m.path[0][1] === c);
+            if (isSelectable) { selectedPiece = { r, c, type: pieceType }; }
         }
+        drawBoard();
     }
 
-    startBackgroundAnalysis() {
-        this.stopBackgroundAnalysis();
-        if (this.gameState.game_over || !this.isHumanTurn()) return;
-        this.analysisInterval = setInterval(async () => {
-            if (this.isAnalysisRunning || this.isRequestPending || !this.isHumanTurn()) return;
-            this.isAnalysisRunning = true;
-            try {
-                const analysisData = await this.api.fetchBackgroundAnalysis();
-                if (analysisData && !analysisData.error) {
-                    this.ui.updateAnalysisPanel(analysisData, this.gameState.current_player);
-                }
-            } finally {
-                this.isAnalysisRunning = false;
-            }
-        }, 3000);
+    // --- BAŞLANGIÇ: Düzeltilmiş Hamle Gönderme Mantığı ---
+    async function sendMove(move) {
+        try {
+            const response = await fetch('/move', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(move), });
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const state = await response.json(); // Yanıtı doğrudan kullan
+            updateUI(state); // Arayüzü yeni durumla güncelle
+        } catch (error) { console.error('Hamle gönderilemedi:', error); }
     }
-
-    stopBackgroundAnalysis() {
-        if (this.analysisInterval) {
-            clearInterval(this.analysisInterval);
-            this.analysisInterval = null;
-        }
-    }
+    // --- SON: Düzeltilmiş Hamle Gönderme Mantığı ---
     
-    isHumanTurn() {
-        if (!this.gameState.is_active || this.gameState.game_over) return false;
-        if (this.gameState.mode === 'pvp') return true;
-        return this.gameState.current_player === this.gameState.player_color;
+    function handleGameOver(state) {
+        let message = "Oyun Bitti!";
+        if (state.winner === 'draw') { message = "Gayyım! Oyun berabere."; } else { const winnerName = state.winner === 'white' ? 'Beyaz' : 'Siyah'; message = `${winnerName} kazandı!`; }
+        showModal(message);
     }
-}
+
+    async function resetGame() {
+        await fetch('/reset', { method: 'POST' });
+        selectedPiece = null;
+        const modal = document.getElementById('modal');
+        if(modal) modal.classList.add('hidden');
+        await updateGameState();
+    }
+
+    function showModal(message) {
+        const modal = document.getElementById('modal'); const modalMessage = document.getElementById('modal-message');
+        if (!modal || !modalMessage) return;
+        modalMessage.textContent = message; modal.classList.remove('hidden');
+    }
+
+    if (boardElement) { boardElement.addEventListener('click', handleSquareClick); }
+    if (newGameBtn) { newGameBtn.addEventListener('click', resetGame); }
+    if (modalNewGameBtn) { modalNewGameBtn.addEventListener('click', resetGame); }
+
+    updateGameState();
+});

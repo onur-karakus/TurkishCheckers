@@ -1,65 +1,76 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Türk Daması Oyna</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body class="home-body">
+<!-- templates/home.html -->
+{% extends "base.html" %}
 
-    <div class="home-container">
-        <div class="home-left">
-            <div class="home-board">
-                <!-- Tahta JavaScript ile dinamik olarak doldurulacak -->
-            </div>
-        </div>
-        <div class="home-right">
-            <h1>Türk Daması Oyna</h1>
-            <p class="subtitle">#1 Numaralı Dama Sitesinde Oyna</p>
-            
-            <!-- DÜZELTME: Linkler yeni rotalara yönlendirildi -->
-            <a href="{{ url_for('play_vs_friend') }}" class="button-link primary">
-                <div class="button-content">
-                    <span class="button-icon">🧑‍🤝‍🧑</span>
-                    <div class="button-text">
-                        <strong>Arkadaşınla Oyna</strong>
-                        <small>Aynı bilgisayarda bir arkadaşınla oyna</small>
-                    </div>
-                </div>
-            </a>
-            
-            <a href="{{ url_for('play_vs_computer') }}" class="button-link secondary">
-                <div class="button-content">
-                    <span class="button-icon">🤖</span>
-                    <div class="button-text">
-                        <strong>Bilgisayara Karşı Oyna</strong>
-                        <small>Yapay zekaya karşı yeteneklerini sına</small>
-                    </div>
-                </div>
-            </a>
+{% block head %}
+<title>Türk Daması - Ana Sayfa</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<style>
+    .home-container { display: flex; justify-content: center; align-items: center; width: 100%; max-width: 900px; gap: 50px; background-color: var(--secondary-bg); padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .home-art { flex-shrink: 0; }
+    .home-art .board { width: 300px; height: 300px; pointer-events: none; }
+    .home-options { display: flex; flex-direction: column; gap: 20px; text-align: center; }
+    .home-options h1 { font-size: 2.5em; color: var(--board-bg-light); margin: 0 0 20px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+    .option-button { display: block; text-decoration: none; background-color: var(--accent-color); color: white; padding: 15px 30px; border-radius: 10px; font-size: 1.2em; font-weight: bold; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+    .option-button:hover { transform: translateY(-3px); background-color: #a0522d; box-shadow: 0 6px 12px rgba(0,0,0,0.3); }
+    .difficulty-selector { display: none; flex-direction: column; gap: 15px; background-color: rgba(0,0,0,0.2); padding: 20px; border-radius: 10px; margin-top: 10px; }
+    .difficulty-button { background-color: #5a5a5a; }
+    .difficulty-button:hover { background-color: #777; }
+    .tournament-button { background-color: #c0392b; } /* Turnuva butonu için farklı renk */
+    .tournament-button:hover { background-color: #e74c3c; }
+    @media (max-width: 768px) {
+        .home-container { flex-direction: column; }
+        .home-art .board { width: 250px; height: 250px; }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="home-container">
+    <div class="home-art">
+        <div class="board-with-notation">
+            <div class="notation-labels ranks">{% for i in range(8, 0, -1) %}<span>{{ i }}</span>{% endfor %}</div>
+            <div class="notation-labels files">{% for char in ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] %}<span>{{ char }}</span>{% endfor %}</div>
+            <div id="board" class="board"></div>
         </div>
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const boardContainer = document.querySelector('.home-board');
-            if (boardContainer) {
-                for (let i = 0; i < 64; i++) {
+    <div class="home-options">
+        <h1>Türk Daması</h1>
+        <a href="#" id="pve-main-btn" class="option-button">Bilgisayara Karşı Oyna</a>
+        <div id="difficulty-selector" class="difficulty-selector">
+            <a href="{{ url_for('pve_game', difficulty='easy') }}" class="option-button difficulty-button">Kolay</a>
+            <a href="{{ url_for('pve_game', difficulty='medium') }}" class="option-button difficulty-button">Orta</a>
+            <a href="{{ url_for('pve_game', difficulty='hard') }}" class="option-button difficulty-button">Zor</a>
+        </div>
+        <a href="{{ url_for('pvp_game') }}" class="option-button">Arkadaşınla Oyna</a>
+        <!-- BAŞLANGIÇ: Yapay Zeka Turnuva Butonu -->
+        <a href="{{ url_for('ai_tournament_page') }}" class="option-button tournament-button">Yapay Zeka Turnuvası</a>
+        <!-- SON: Yapay Zeka Turnuva Butonu -->
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const boardElement = document.getElementById('board');
+        if (boardElement) {
+            const blackPieces = [[1,0],[1,1],[1,2],[1,3],[1,4],[1,5],[1,6],[1,7],[2,0],[2,1],[2,2],[2,3],[2,4],[2,5],[2,6],[2,7]];
+            const whitePieces = [[5,0],[5,1],[5,2],[5,3],[5,4],[5,5],[5,6],[5,7],[6,0],[6,1],[6,2],[6,3],[6,4],[6,5],[6,6],[6,7]];
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
                     const square = document.createElement('div');
-                    const row = Math.floor(i / 8);
-                    const col = i % 8;
-                    square.className = `square ${(row + col) % 2 !== 0 ? 'dark' : 'light'}`;
-                    if ((row === 1 || row === 2)) {
-                       square.innerHTML = `<div class="piece piece-black"></div>`;
-                    }
-                    if ((row === 5 || row === 6)) {
-                       square.innerHTML = `<div class="piece piece-white"></div>`;
-                    }
-                    boardContainer.appendChild(square);
+                    square.classList.add('square', (r + c) % 2 === 0 ? 'light' : 'dark');
+                    if (blackPieces.some(p => p[0] === r && p[1] === c)) { const piece = document.createElement('div'); piece.classList.add('piece', 'black'); square.appendChild(piece); }
+                    else if (whitePieces.some(p => p[0] === r && p[1] === c)) { const piece = document.createElement('div'); piece.classList.add('piece', 'white'); square.appendChild(piece); }
+                    boardElement.appendChild(square);
                 }
             }
-        });
-    </script>
-</body>
-</html>
+        }
+        const pveButton = document.getElementById('pve-main-btn');
+        const difficultySelector = document.getElementById('difficulty-selector');
+        if (pveButton && difficultySelector) {
+            pveButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                difficultySelector.style.display = difficultySelector.style.display === 'flex' ? 'none' : 'flex';
+            });
+        }
+    });
+</script>
+{% endblock %}

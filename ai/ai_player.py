@@ -1,170 +1,149 @@
-# TurkishCheckers/ai/ai_player.py
+# ai/ai_player.py
+"""
+Yapay zeka motoru. 
+(TypeError: unexpected keyword argument 'time_limit_seconds' hatası düzeltildi)
+"""
+import math
 import random
-import json
-import os
-import string
+import copy
+import time
+import numpy as np
+from core import rules
 
-# --- Sabitler ve Dosya Yolları ---
-AI_POOL_PATH = os.path.join(os.path.dirname(__file__), 'ai_pool.json')
-AI_GRAVEYARD_PATH = os.path.join(os.path.dirname(__file__), 'ai_graveyard.json')
+# --- Stratejik Değerlendirme Sabitleri ---
+MATERIAL_SCORES = {1: 100, 2: -100, 3: 500, 4: -500}
+MAN_PST_WHITE = [
+    [200, 200, 200, 200, 200, 200, 200, 200], [ 70,  80,  90,  90,  90,  90,  80,  70],
+    [ 50,  60,  70,  70,  70,  70,  60,  50], [ 30,  40,  50,  50,  50,  50,  40,  30],
+    [ 15,  20,  30,  30,  30,  30,  20,  15], [  5,  10,  15,  15,  15,  15,  10,   5],
+    [  0,   0,   0,   0,   0,   0,   0,   0], [  0,   0,   0,   0,   0,   0,   0,   0]
+]
+MAN_PST_BLACK = MAN_PST_WHITE[::-1]
+KING_PST = [
+    [ 10,  20,  20,  20,  20,  20,  20,  10], [ 20,  30,  35,  35,  35,  35,  30,  20],
+    [ 20,  35,  45,  50,  50,  45,  35,  20], [ 20,  35,  50,  60,  60,  50,  35,  20],
+    [ 20,  35,  50,  60,  60,  50,  35,  20], [ 20,  35,  45,  50,  50,  45,  35,  20],
+    [ 20,  30,  35,  35,  35,  35,  30,  20], [ 10,  20,  20,  20,  20,  20,  20,  10]
+]
+
+class MCTSNode:
+    def __init__(self, parent=None, prior_p=1.0):
+        self.parent, self.children, self.visit_count, self.total_value, self.prior_probability = parent, {}, 0, 0.0, prior_p
+    def expand(self, policy):
+        for move_tuple, prob in policy.items():
+            if move_tuple not in self.children: self.children[move_tuple] = MCTSNode(parent=self, prior_p=prob)
+    def select(self, c_puct):
+        best_score, best_action = -float('inf'), None
+        for action, node in self.children.items():
+            score = (1.0 - (node.total_value / (node.visit_count + 1e-5))) + c_puct * node.prior_probability * math.sqrt(self.visit_count) / (1 + node.visit_count)
+            if score > best_score: best_score, best_action = score, action
+        return best_action, self.children[best_action]
+    def backup(self, value):
+        if self.parent: self.parent.backup(-value)
+        self.visit_count += 1
+        self.total_value += value
 
 class AIPlayer:
-    """
-    Bir yapay zeka oyuncusunu temsil eder. Bu sürüm, nesil tabanlı kimlik,
-    genetik DNA ve mezarlık sistemi gibi gelişmiş özellikleri içerir.
-    """
-    def __init__(self, player_id, generation, creation_order, elo=1000, weights=None, parent_dna=None):
-        """
-        Yeni bir AI oyuncusu oluşturur.
+    # --- BAŞLANGIÇ: Hata Düzeltmesi ---
+    # __init__ metodu artık 'time_limit_seconds' parametresini kabul ediyor.
+    def __init__(self, player_color, time_limit_seconds=5, c_puct=1.25):
+        self.player_color = player_color
+        self.time_limit_seconds = time_limit_seconds
+        self.c_puct = c_puct
+    # --- SON: Hata Düzeltmesi ---
 
-        Args:
-            player_id (int): Oyuncunun benzersiz ID'si (sabit kalır).
-            generation (int): Oyuncunun oluşturulduğu nesil.
-            creation_order (int): Nesil içindeki oluşturulma sırası.
-            elo (float): Başlangıç ELO puanı.
-            weights (dict, optional): Oyuncunun beyni. Yoksa, rastgele oluşturulur.
-            parent_dna (str, optional): Kalıtım için kullanılacak 3 harfli ebeveyn DNA'sı.
-        """
-        self.id = player_id
-        self.elo = elo
+    def _advanced_evaluation(self, board):
+        if self._is_game_over(board):
+            winner = self._get_winner(board)
+            if winner == 'white': return 10000
+            if winner == 'black': return -10000
+            return 0
+        score, total_pieces = 0, 0
+        for r in range(8):
+            for c in range(8):
+                piece = board[r][c]
+                if piece == 0: continue
+                total_pieces += 1
+                score += MATERIAL_SCORES.get(piece, 0)
+                if piece == 1: score += MAN_PST_WHITE[r][c]
+                elif piece == 2: score -= MAN_PST_BLACK[r][c]
+                elif piece == 3: score += KING_PST[r][c]
+                elif piece == 4: score -= KING_PST[r][c]
+        if total_pieces < 10:
+             material_score = sum(MATERIAL_SCORES.get(p, 0) for row in board for p in row)
+             score = (score * 0.4) + (material_score * 0.6)
+        return score
+
+    def _get_policy_and_value(self, board, player_color, board_history):
+        possible_moves, _ = rules.get_all_valid_moves(board, player_color, board_history)
+        if not possible_moves: return {}, 0.0
+        move_scores = {}
+        for move in possible_moves:
+            temp_board = self._simulate_move(board, move)
+            score = self._advanced_evaluation(temp_board)
+            if player_color == 'black': score = -score
+            move_scores[tuple(move['path'])] = score
+        if not move_scores: return {}, 0.0
+        scores = np.array(list(move_scores.values()))
+        scores -= np.max(scores)
+        exp_scores = np.exp(scores / 100)
+        probs = exp_scores / (np.sum(exp_scores) + 1e-5)
+        policy = {path_tuple: prob for path_tuple, prob in zip(move_scores.keys(), probs)}
+        value = self._advanced_evaluation(board)
+        normalized_value = math.tanh(value / 1000.0)
+        return policy, normalized_value
+
+    def get_move(self, board, board_history):
+        root = MCTSNode()
+        policy, _ = self._get_policy_and_value(board, self.player_color, board_history)
+        if not policy: return None
+        root.expand(policy)
+        start_time = time.time()
+        num_simulations = 0
+        while time.time() - start_time < self.time_limit_seconds:
+            node, temp_board, current_player = root, copy.deepcopy(board), self.player_color
+            temp_history = copy.deepcopy(board_history)
+            while node.children:
+                action, node = node.select(self.c_puct)
+                temp_board = self._simulate_move(temp_board, {'path': list(action)})
+                temp_history.append(temp_board)
+                current_player = 'white' if current_player == 'black' else 'black'
+            policy, value = self._get_policy_and_value(temp_board, current_player, temp_history)
+            if not self._is_game_over(temp_board):
+                node.expand(policy)
+            if current_player == 'black': value = -value
+            node.backup(value)
+            num_simulations += 1
+        print(f"AI ({self.player_color}) completed {num_simulations} simulations in {time.time() - start_time:.2f} seconds.")
+        if not root.children: return None
+        best_action = max(root.children.items(), key=lambda item: item[1].visit_count)[0]
+        return {'path': best_action}
+
+    def _simulate_move(self, board, move):
+        new_board = copy.deepcopy(board)
+        if 'path' not in move or not move['path']: return new_board
+        start_pos, end_pos = move['path'][0], move['path'][-1]
+        if not (0 <= start_pos[0] < 8 and 0 <= start_pos[1] < 8): return new_board
+        piece = new_board[start_pos[0]][start_pos[1]]
+        if piece == 0: return new_board
+        player = rules.get_piece_color(piece)
+        new_board[start_pos[0]][start_pos[1]] = 0
+        promoted_piece = piece
+        if player == 'white' and end_pos[0] == 0: promoted_piece = 3
+        elif player == 'black' and end_pos[0] == 7: promoted_piece = 4
+        new_board[end_pos[0]][end_pos[1]] = promoted_piece
+        if 'captured' in move:
+            for r, c in move['captured']: new_board[r][c] = 0
+        return new_board
         
-        # --- YENİ KİMLİK SİSTEMİ ---
-        self.generation = generation
-        self.creation_order = creation_order
-        
-        # DNA'yı oluştur: Son harf ebeveynden kalıtsal, ilk ikisi rastgele.
-        if parent_dna and len(parent_dna) == 3:
-            inherited_char = parent_dna[-1]
-            new_chars = ''.join(random.choice(string.ascii_uppercase) for _ in range(2))
-            self.dna = new_chars + inherited_char
-        else:
-            # Ebeveyn yoksa (ilk nesil) veya DNA geçersizse, tamamen rastgele oluştur.
-            self.dna = ''.join(random.choice(string.ascii_uppercase) for _ in range(3))
-
-        # İsmi yeni formata göre oluştur: Örn: 001001ABC
-        self.name = f"{self.generation:03d}{self.creation_order:03d}{self.dna}"
-
-        if weights:
-            self.weights = weights
-        else:
-            self.weights = self._generate_random_weights()
-
-    def _generate_random_weights(self):
-        """Yeni bir AI için rastgele stratejik ağırlıklar oluşturur."""
-        return {
-            "piece_value": random.uniform(8.0, 12.0),
-            "dama_value": random.uniform(25.0, 35.0),
-            "advancement_bonus": random.uniform(0.1, 0.6),
-            "center_control_bonus": random.uniform(0.1, 0.6),
-            "defensive_bonus": random.uniform(0.05, 0.4)
-        }
-
-    def to_dict(self):
-        """Oyuncu nesnesini JSON'a yazmak için sözlüğe dönüştürür."""
-        return {
-            "id": self.id, 
-            "name": self.name, 
-            "elo": self.elo, 
-            "weights": self.weights,
-            "generation": self.generation,
-            "creation_order": self.creation_order,
-            "dna": self.dna
-        }
-
-    @classmethod
-    def from_dict(cls, data):
-        """Sözlükten bir oyuncu nesnesi oluşturur."""
-        # Eski oyuncu verileriyle uyumluluk için .get() kullanılır.
-        creation_order = data.get('creation_order', data.get('id', 0))
-        
-        # Eğer eski bir 'name' formatı varsa, onu ayrıştırarak nesil ve DNA'yı çıkarmaya çalış
-        generation = data.get('generation', 0)
-        dna = data.get('dna')
-        if not dna and len(data.get('name', '')) > 6:
-            try:
-                name_str = data['name']
-                generation = int(name_str[0:3])
-                # creation_order = int(name_str[3:6]) # ID'yi korumak daha iyi
-                dna = name_str[6:9]
-            except (ValueError, IndexError):
-                pass # Ayrıştırma başarısız olursa varsayılanlar kullanılır
-
-        return cls(
-            player_id=data['id'], 
-            elo=data.get('elo', 1000), 
-            weights=data['weights'],
-            generation=generation,
-            creation_order=creation_order,
-            parent_dna=dna # Mevcut DNA, bir sonraki nesil için ebeveyn DNA'sı olur
-        )
-
-# --- Havuz ve Mezarlık Yönetim Fonksiyonları ---
-
-def create_player_pool(size=100):
-    """Belirtilen boyutta, 0. nesil bir AI oyuncu havuzu oluşturur."""
-    return [AIPlayer(player_id=i, generation=0, creation_order=i) for i in range(size)]
-
-def save_pool(pool, filename=AI_POOL_PATH):
-    """Oyuncu havuzunu bir JSON dosyasına kaydeder."""
-    pool.sort(key=lambda p: p.elo, reverse=True)
-    try:
-        with open(filename, 'w', encoding='utf-8') as f:
-            json.dump([player.to_dict() for player in pool], f, indent=4)
-        print(f"{len(pool)} oyuncu başarıyla '{filename}' dosyasına kaydedildi.")
-    except IOError as e:
-        print(f"HATA: '{filename}' dosyasına yazılamadı. Hata: {e}")
-
-def load_pool(filename=AI_POOL_PATH):
-    """Bir JSON dosyasından oyuncu havuzunu yükler."""
-    if not os.path.exists(filename):
-        print(f"Uyarı: '{filename}' bulunamadı. Yeni bir havuz oluşturulacak.")
+    def _is_game_over(self, board): return self._get_winner(board) is not None
+    def _get_winner(self, board):
+        white_pieces = sum(row.count(1) + row.count(3) for row in board)
+        black_pieces = sum(row.count(2) + row.count(4) for row in board)
+        if white_pieces == 0: return 'black'
+        if black_pieces == 0: return 'white'
+        white_moves, _ = rules.get_all_valid_moves(board, 'white')
+        if not white_moves: return 'black'
+        black_moves, _ = rules.get_all_valid_moves(board, 'black')
+        if not black_moves: return 'white'
         return None
-        
-    try:
-        with open(filename, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            pool = [AIPlayer.from_dict(p_data) for p_data in data]
-            pool.sort(key=lambda p: p.elo, reverse=True)
-            print(f"{len(pool)} oyuncu '{filename}' dosyasından yüklendi.")
-            return pool
-    except (json.JSONDecodeError, IOError, KeyError) as e:
-        print(f"HATA: '{filename}' dosyası okunurken bir hata oluştu: {e}")
-        return None
-
-def load_graveyard(filename=AI_GRAVEYARD_PATH):
-    """Daha önce elenmiş AI'ların listesini yükler."""
-    if not os.path.exists(filename):
-        return []
-    try:
-        with open(filename, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            return [AIPlayer.from_dict(p_data) for p_data in data]
-    except (json.JSONDecodeError, IOError):
-        print(f"Uyarı: Mezarlık dosyası ('{filename}') okunamadı veya boş.")
-        return []
-
-def save_to_graveyard(relegated_players, filename=AI_GRAVEYARD_PATH):
-    """Elenen oyuncuları mezarlık dosyasına ekler."""
-    graveyard = load_graveyard(filename)
-    existing_ids = {p.id for p in graveyard}
-    
-    newly_relegated = [p for p in relegated_players if p.id not in existing_ids]
-    if not newly_relegated:
-        return
-
-    graveyard.extend(newly_relegated)
-    try:
-        with open(filename, 'w', encoding='utf-8') as f:
-            json.dump([player.to_dict() for player in graveyard], f, indent=4)
-        print(f"{len(newly_relegated)} yeni oyuncu mezarlığa eklendi.")
-    except IOError as e:
-        print(f"HATA: Mezarlık dosyasına yazılamadı: {e}")
-
-def get_default_ai_weights():
-    """Oyun için varsayılan bir AI 'beyni' döndürür."""
-    pool = load_pool()
-    if pool:
-        return pool[0].weights
-    
-    print("Varsayılan AI havuzu bulunamadı, standart ağırlıklar kullanılıyor.")
-    return AIPlayer(player_id=0, generation=0, creation_order=0).weights

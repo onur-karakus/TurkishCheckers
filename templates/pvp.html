@@ -1,84 +1,79 @@
+<!-- templates/pvp.html -->
 {% extends "base.html" %}
 
-{% block title %}Arkadaşınla Oyna - Türk Daması{% endblock %}
-
-{% block game_state_script %}
-<script>
-    const initialGameState = {{ game_state | tojson | safe }};
-</script>
+{% block head %}
+<title>Türk Daması - İki Kişilik</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 {% endblock %}
 
-{% block content %}
-<div class="page-container">
-    <div class="board-area">
-        <div id="player-info-top" class="player-info-box">
-            <span class="player-name">Siyah</span>
-            <span class="player-clock">10:00</span>
+{% block body %}
+<div class="game-container">
+    <div class="player-panel top">
+        <div class="player-info">
+            <span class="player-name">Oyuncu 2 (Siyah)</span>
         </div>
-        <div id="board-container">
-            <div class="coordinates files">
-                <span>a</span><span>b</span><span>c</span><span>d</span><span>e</span><span>f</span><span>g</span><span>h</span>
-            </div>
-            <div class="coordinates ranks">
-                <span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span>
-            </div>
-            <div id="board"></div>
-            <svg id="arrow-container" class="arrow-svg"></svg>
-        </div>
-        <div id="player-info-bottom" class="player-info-box">
-            <span class="player-name">Beyaz</span>
-            <span class="player-clock">10:00</span>
+        <div id="black-captured" class="captured-pieces-container">
+            <span class="captured-label">Alınan Taşlar:</span>
+            <div class="captured-pieces"></div>
         </div>
     </div>
 
-    <div class="sidebar-container">
-        <div class="game-panel">
-            <a href="{{ url_for('home') }}" style="text-decoration: none; color: inherit;"><h1 class="panel-title">Türk Daması</h1></a>
-            <p class="message"></p>
-            <div class="analysis-container">
-                <div class="analysis-header">
-                    <h4>Motor Analizi</h4>
-                    <button id="toggle-analysis-btn">Gizle</button>
-                </div>
-                <div class="engine-analysis-panel">
-                    <div class="evaluation-bar-container">
-                        <div id="evaluation-bar">
-                            <div id="eval-bar-white"></div>
-                            <div id="eval-bar-black"></div>
-                        </div>
-                        <div id="evaluation-score">0.50</div>
-                    </div>
-                    <div class="engine-lines-container">
-                        <ul id="engine-lines">
-                            <li>Hamle yapıldıkça analiz güncellenir...</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            <div class="controls-box">
-                <form action="{{ url_for('play_vs_friend') }}" method="POST" id="new-game-form">
-                    <div class="time-control-wrapper">
-                         <label for="time-control-select">Zaman Kontrolü</label>
-                         <select id="time-control-select" name="time_control">
-                            <option value="600_0" {% if game_state.time_white == 600 and game_state.increment == 0 %}selected{% endif %}>10 Dakika</option>
-                            <option value="300_3" {% if game_state.time_white == 300 and game_state.increment == 3 %}selected{% endif %}>5 | 3</option>
-                            <option value="180_2" {% if game_state.time_white == 180 and game_state.increment == 2 %}selected{% endif %}>3 | 2</option>
-                            <option value="60_1" {% if game_state.time_white == 60 and game_state.increment == 1 %}selected{% endif %}>1 | 1</option>
-                            <option value="unlimited" {% if game_state.time_white == None %}selected{% endif %}>Sınırsız</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="start-game-btn">Yeni Oyuna Başla</button>
-                </form>
+    <div class="board-area">
+        <div class="game-header">
+            <p id="turn-info">Sıra: Beyaz</p>
+            <p id="game-status"></p>
+        </div>
+        
+        <div class="evaluation-wrapper">
+            <span id="eval-text" class="eval-text">50%</span>
+            <div class="evaluation-bar-container">
+                <div id="eval-bar-white" class="eval-bar-white"></div>
+                <div id="eval-bar-black" class="eval-bar-black"></div>
             </div>
         </div>
-        <div class="notation-panel">
-            <h2>Hamleler</h2>
-            <div id="notation-list-container"></div>
+        
+        {% include 'board.html' %}
+        
+        <div class="controls">
+            <button id="new-game-btn">Yeni Oyun</button>
+            <a href="{{ url_for('home') }}" class="home-button">Ana Sayfa</a>
+        </div>
+    </div>
+
+    <div class="player-panel bottom">
+        <div class="player-info">
+            <span class="player-name">Oyuncu 1 (Beyaz)</span>
+        </div>
+        <div id="white-captured" class="captured-pieces-container">
+            <span class="captured-label">Alınan Taşlar:</span>
+            <div class="captured-pieces"></div>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/main.js') }}" type="module"></script>
+<style>
+    .controls { display: flex; gap: 15px; justify-content: center;}
+    .home-button { 
+        display: inline-block;
+        text-decoration: none;
+        background-color: var(--secondary-bg);
+        color: white;
+        padding: 12px 24px;
+        font-size: 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    .home-button:hover { background-color: #666; }
+</style>
+
+<!-- Modal -->
+<div id="modal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <h2 id="modal-message">Oyun Bitti</h2>
+        <button id="modal-new-game">Yeni Oyun Başlat</button>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/pvp.js') }}"></script>
 {% endblock %}

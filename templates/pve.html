@@ -1,91 +1,55 @@
+<!-- templates/pve.html -->
 {% extends "base.html" %}
 
-{% block title %}Bilgisayara Karşı - Türk Daması{% endblock %}
-
-{% block game_state_script %}
-<script>
-    const initialGameState = {{ game_state | tojson | safe }};
-</script>
+{% block head %}
+<title>Türk Daması - Bilgisayara Karşı</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 {% endblock %}
 
-{% block content %}
-<style>
-    .form-section { margin-bottom: 20px; text-align: left; }
-    .form-section label { display: block; margin-bottom: 8px; font-weight: bold; color: var(--color-text-dark); }
-    .color-selector { display: flex; gap: 10px; justify-content: space-between; }
-    .color-option { flex: 1; padding: 12px; border-radius: 6px; border: 2px solid var(--color-panel-bg-light); background-color: var(--color-panel-bg-light); color: var(--color-text); cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 1em; }
-    .color-option:hover { border-color: #666; }
-    .color-option.active { border-color: var(--color-accent-green); background-color: #3a3835; box-shadow: 0 0 10px rgba(133, 176, 86, 0.3); }
-    .color-option .piece-icon { width: 24px; height: 24px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.3); }
-    .color-option .white-piece { background: #e0e0e0; }
-    .color-option .black-piece { background: #333; }
-    .color-option .random-piece { background: linear-gradient(45deg, #e0e0e0 50%, #333 50%); font-size: 18px; line-height: 22px; color: var(--color-accent-green); border-color: #888; text-align: center; }
-    .resign-btn { background-color: #c13e3e; }
-    .resign-btn:hover { background-color: #d9534f; }
-</style>
-
-<div class="page-container">
-    <div class="board-area">
-        <div id="player-info-top" class="player-info-box">
-            <span class="player-name">Bilgisayar</span>
-            <span class="player-clock">--:--</span>
-        </div>
-        <div id="board-container">
-            <div class="coordinates files"><span>a</span><span>b</span><span>c</span><span>d</span><span>e</span><span>f</span><span>g</span><span>h</span></div>
-            <div class="coordinates ranks"><span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span></div>
-            <div id="board"></div>
-            <svg id="arrow-container" class="arrow-svg"></svg>
-        </div>
-        <div id="player-info-bottom" class="player-info-box">
-            <span class="player-name">Siz</span>
-            <span class="player-clock">--:--</span>
+{% block body %}
+<div class="game-container">
+    <div class="player-panel top">
+        <div class="player-info"><span class="player-name">Yapay Zeka (Siyah)</span></div>
+        <div id="black-captured" class="captured-pieces-container">
+            <span class="captured-label">Alınan Taşlar:</span><div class="captured-pieces"></div>
         </div>
     </div>
-
-    <div class="sidebar-container">
-        <div class="game-panel">
-            <a href="{{ url_for('home') }}" style="text-decoration: none; color: inherit;"><h1 class="panel-title">Türk Daması</h1></a>
-            <p class="message"></p>
-            <div class="analysis-container">
-                <div class="analysis-header"><h4>Motor Analizi</h4><button id="toggle-analysis-btn">Gizle</button></div>
-                <div class="engine-analysis-panel">
-                    <div class="evaluation-bar-container">
-                        <div id="evaluation-bar"><div id="eval-bar-white"></div></div>
-                        <div id="evaluation-score">0.00</div>
-                    </div>
-                    <div class="engine-lines-container"><ul id="engine-lines"><li>Oynamak için bekleyin...</li></ul></div>
-                </div>
-            </div>
-            <div class="controls-box">
-                <div id="new-game-settings">
-                    <div class="form-section">
-                        <label for="difficulty-slider">Zorluk: <strong id="difficulty-value">{{ game_state.difficulty }}</strong></label>
-                        <input type="range" min="1" max="100" value="{{ game_state.difficulty }}" id="difficulty-slider" name="difficulty">
-                    </div>
-                    <div class="form-section">
-                        <label>Renginizi Seçin</label>
-                        <div class="color-selector">
-                            <button type="button" class="color-option active" data-color="W"><div class="piece-icon white-piece"></div><span>Beyaz</span></button>
-                            <button type="button" class="color-option" data-color="B"><div class="piece-icon black-piece"></div><span>Siyah</span></button>
-                            <button type="button" class="color-option" data-color="Random"><div class="piece-icon random-piece">?</div><span>Rastgele</span></button>
-                        </div>
-                    </div>
-                    <button type="button" id="start-game-btn" class="start-game-btn">Yeni Oyuna Başla</button>
-                </div>
-                <div id="active-game-controls" class="hidden">
-                    <button type="button" id="resign-btn" class="start-game-btn resign-btn">Oyunu Bitir</button>
-                </div>
+    <div class="board-area">
+        <div class="game-header">
+            <p id="turn-info">Sıra: Beyaz</p><p id="game-status"></p>
+        </div>
+        <div class="evaluation-wrapper">
+            <span id="eval-text" class="eval-text">50%</span>
+            <div class="evaluation-bar-container">
+                <div id="eval-bar-white" class="eval-bar-white"></div>
+                <div id="eval-bar-black" class="eval-bar-black"></div>
             </div>
         </div>
-        <div class="notation-panel">
-            <h2>Hamleler</h2>
-            <div id="notation-list-container"></div>
+        <div class="board-with-notation">
+            <div class="notation-labels ranks">
+                {% for i in range(8, 0, -1) %}<span>{{ i }}</span>{% endfor %}
+            </div>
+            <div class="notation-labels files">
+                {% for char in ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] %}<span>{{ char }}</span>{% endfor %}
+            </div>
+            {% include 'board.html' %}
+        </div>
+        <div class="controls">
+            <button id="new-game-btn">Yeni Oyun</button>
+        </div>
+    </div>
+    <div class="player-panel bottom">
+        <div class="player-info"><span class="player-name">Oyuncu (Beyaz)</span></div>
+        <div id="white-captured" class="captured-pieces-container">
+            <span class="captured-label">Alınan Taşlar:</span><div class="captured-pieces"></div>
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<!-- DÜZELTME: Gereksiz script bloğu kaldırıldı. -->
-<script src="{{ url_for('static', filename='js/main.js') }}" type="module"></script>
+<div id="modal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <h2 id="modal-message">Oyun Bitti</h2>
+        <button id="modal-new-game">Yeni Oyun Başlat</button>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='js/game.js') }}"></script>
 {% endblock %}
