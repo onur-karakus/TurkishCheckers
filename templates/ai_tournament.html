@@ -1,0 +1,57 @@
+<!-- templates/ai_tournament.html -->
+{% extends "base.html" %}
+
+{% block head %}
+<title>Türk Daması - AI Turnuvası</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+{% endblock %}
+
+{% block body %}
+<div class="tournament-layout">
+    <!-- BAŞLANGIÇ: Ana İçerik Grubu -->
+    <div class="tournament-main-content">
+        <div class="tournament-board-area">
+            <div class="evaluation-wrapper">
+                <span id="eval-text" class="eval-text">50%</span>
+                <div class="evaluation-bar-container">
+                    <div id="eval-bar-white" class="eval-bar-white"></div>
+                    <div id="eval-bar-black" class="eval-bar-black"></div>
+                </div>
+            </div>
+            <div class="board-with-notation">
+                <div class="notation-labels ranks">{% for i in range(8, 0, -1) %}<span>{{ i }}</span>{% endfor %}</div>
+                <div class="notation-labels files">{% for char in ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] %}<span>{{ char }}</span>{% endfor %}</div>
+                {% include 'board.html' %}
+            </div>
+            <div class="controls" style="margin-top: 20px;">
+                <a href="{{ url_for('home') }}" class="option-button">Ana Sayfa</a>
+            </div>
+        </div>
+        <div class="tournament-info">
+            <div id="tournament-status">
+                <h2>Yapay Zeka Turnuvası</h2>
+                <p id="match-info">Turnuvayı başlatmak için butona tıklayın.</p>
+                <button id="start-tournament-btn" class="option-button">Turnuvayı Başlat</button>
+            </div>
+            <h3>Skor Tablosu</h3>
+            <table id="scoreboard">
+                <thead><tr><th>Seviye</th><th>G</th><th>B</th><th>M</th><th>Puan</th></tr></thead>
+                <tbody></tbody>
+            </table>
+            <h3>Fikstür</h3>
+            <table id="schedule">
+                <thead><tr><th>Beyaz</th><th>Siyah</th><th>Kazanan</th><th>Hamle</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+    <!-- SON: Ana İçerik Grubu -->
+
+    <!-- Hamle Kaydı Bölümü -->
+    <div class="notation-container">
+        <div class="notation-header">Hamle Kaydı</div>
+        <ol id="notation-list" class="notation-list"></ol>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='js/ai_tournament.js') }}"></script>
+{% endblock %}
