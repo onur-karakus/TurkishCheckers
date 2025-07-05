@@ -1,31 +1,26 @@
-# core/notation.py
-"""
-Bu modül, oyun içi hamle verilerini standart dama notasyonuna çevirir.
-Örn: [(5, 0), (4, 0)] -> "a3-a4"
-"""
+# Dama Pozisyon Notasyonu (PDN) benzeri basit bir gösterim
+# Tahtadaki koordinatları (row, col) cebirsel notasyona (a1, b2 vb.) çevirir.
 
-def _get_square_notation(r, c):
-    """Verilen satır ve sütun indeksini 'a1' gibi bir nota çevirir."""
-    # Sütunlar: 0->a, 1->b, ...
-    file = chr(ord('a') + c)
-    # Satırlar: 7->1, 6->2, ..., 0->8
-    rank = str(8 - r)
+def to_algebraic(row, col):
+    """(0,0) -> 'a8', (7,7) -> 'h1' gibi dönüşüm yapar."""
+    if not (0 <= row <= 7 and 0 <= col <= 7):
+        return ""
+    file = chr(ord('a') + col)
+    rank = str(8 - row)
     return f"{file}{rank}"
 
-def to_dama_notation(move):
+def get_move_notation(board, from_sq, to_sq):
     """
-    Bir hamle objesini tam notasyon dizesine çevirir.
-    Taş almalı hamleler için 'x' kullanır.
+    Verilen başlangıç ve bitiş karelerine göre hamle notasyonunu oluşturur.
+    Örn: "c3-d4" veya "c3xd5"
     """
-    path = move.get('path', [])
-    if not path or len(path) < 2:
-        return "Geçersiz Hamle"
+    from_alg = to_algebraic(from_sq[0], from_sq[1])
+    to_alg = to_algebraic(to_sq[0], to_sq[1])
 
-    # Çoklu taş almalarda (zincirleme hamleler), ara adımlar yerine sadece başlangıç ve bitiş kullanılır.
-    # Ancak taş alma 'x' ile belirtilir.
-    start_square = _get_square_notation(path[0][0], path[0][1])
-    end_square = _get_square_notation(path[-1][0], path[-1][1])
-    
-    separator = 'x' if move.get('captured') else '-'
-    
-    return f"{start_square}{separator}{end_square}"
+    # Hamlenin taş alıp almadığını kontrol et
+    # Basit bir yaklaşımla, aradaki kare sayısına bakabiliriz
+    is_capture = abs(from_sq[0] - to_sq[0]) > 1 or abs(from_sq[1] - to_sq[1]) > 1
+    separator = 'x' if is_capture else '-'
+
+    return f"{from_alg}{separator}{to_alg}"
+

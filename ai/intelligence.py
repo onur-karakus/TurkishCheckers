@@ -1,216 +1,211 @@
-# TurkishCheckers/ai/intelligence.py
 import math
 import random
 import time
-from core import rules, notation, board as board_utils
+from copy import deepcopy
+from core.rules import get_possible_moves, make_move, check_game_over
+from core.board import Board
 
-class MinimaxEngine:
+# MCTS için sabitler
+C_PUCT = 1.41  # Keşif (exploration) sabiti, sqrt(2)'ye yakın bir değer
+
+class Node:
     """
-    YÜKSELTME: Bu sürüm, ham puanları Leela Chess Zero benzeri bir kazanma
-    olasılığına çevirerek daha sezgisel bir skorlama sunar.
+    Monte Carlo Ağacındaki her bir düğümü temsil eder.
+    Bir oyun durumunu (state) ve o duruma ilişkin istatistikleri tutar.
     """
-    def __init__(self):
-        self.start_time = 0
-        self.time_limit = 0
-        self.nodes_searched = 0
-        self.transposition_table = {}
+    def __init__(self, state: Board, parent=None, move=None):
+        self.state = state
+        self.parent = parent
+        self.children = []
+        self.move = move  # Bu düğüme gelmeyi sağlayan hamle
+        self.wins = 0
+        self.visits = 0
+        self.is_fully_expanded = self.state.is_game_over()
+        self.player_to_move = self.state.get_current_player()
 
-    def _convert_score_to_win_percentage(self, score):
+    def __repr__(self):
+        return f"Node(move={self.move}, W/V={self.wins}/{self.visits})"
+
+    def select_best_child(self):
         """
-        Ham değerlendirme puanını (centipawn) %0-100 arası bir kazanma
-        olasılığına çevirir.
+        UCB1 (Upper Confidence Bound 1) formülünü kullanarak en iyi çocuğu seçer.
+        Bu formül, en çok kazandıran (exploitation) ve en az ziyaret edilen (exploration)
+        düğümler arasında bir denge kurar.
         """
-        if score > 9000: return 100.0
-        if score < -9000: return 0.0
-        
-        # DÜZELTME: Ölçekleme faktörü, küçük avantajların olasılığa daha
-        # hassas bir şekilde yansıması için güncellendi.
-        SCALING_FACTOR = 150.0
-        return 100.0 / (1 + math.exp(-score / SCALING_FACTOR))
+        log_parent_visits = math.log(self.visits)
 
-    def _is_time_up(self):
-        return time.time() - self.start_time > self.time_limit
+        best_score = -1
+        best_child = None
 
-    def _get_next_board_state(self, board_state, move_path, move_type):
-        temp_board = [row[:] for row in board_state]
-        if move_type == 'capture':
-            rules.apply_capture_on_board(move_path, temp_board)
-        else:
-            rules.apply_normal_move_on_board(move_path[0], move_path[1], temp_board)
-        return temp_board
+        for child in self.children:
+            exploitation_term = child.wins / child.visits
+            exploration_term = C_PUCT * math.sqrt(log_parent_visits / child.visits)
 
-    def _search(self, board_state, depth, alpha, beta, is_maximizing_player, current_player, root_player, weights):
-        if self._is_time_up():
-            return 0, None
+            # PUCT (Polynomial Upper Confidence Trees) formülü
+            score = exploitation_term + exploration_term
 
-        self.nodes_searched += 1
-        
-        is_terminal, winner = rules.is_game_over(board_state, current_player)
+            if score > best_score:
+                best_score = score
+                best_child = child
 
-        if depth == 0 or is_terminal:
-            if is_terminal:
-                if winner == root_player: return (10000 + depth, None)
-                if winner == rules.get_opponent(root_player): return (-10000 - depth, None)
-                return (0, None)
-            return self.evaluate_board(board_state, root_player, weights), None
+        return best_child
 
-        board_tuple = tuple(map(tuple, board_state))
-        tt_key = (board_tuple, depth, current_player)
-        if tt_key in self.transposition_table:
-            return self.transposition_table[tt_key]
+    def expand(self):
+        """
+        Düğümü genişletir. Geçerli tüm hamleler için yeni çocuk düğümler oluşturur.
+        """
+        if self.is_fully_expanded:
+            return None
 
-        best_move = None
-        possible_moves = rules.get_all_possible_moves(current_player, board_state)
-        
-        if not possible_moves['moves']:
-             return (-10000 - depth, None) if is_maximizing_player else (10000 + depth, None)
+        legal_moves = self.state.get_possible_moves()
 
-        if is_maximizing_player:
-            max_eval = -math.inf
-            for move_path in possible_moves['moves']:
-                next_board = self._get_next_board_state(board_state, move_path, possible_moves['type'])
-                evaluation, _ = self._search(next_board, depth - 1, alpha, beta, False, rules.get_opponent(current_player), root_player, weights)
-                if self._is_time_up(): break
-                if evaluation > max_eval:
-                    max_eval = evaluation
-                    best_move = move_path
-                alpha = max(alpha, evaluation)
-                if beta <= alpha: break
-            self.transposition_table[tt_key] = (max_eval, best_move)
-            return max_eval, best_move
-        else:
-            min_eval = math.inf
-            for move_path in possible_moves['moves']:
-                next_board = self._get_next_board_state(board_state, move_path, possible_moves['type'])
-                evaluation, _ = self._search(next_board, depth - 1, alpha, beta, True, rules.get_opponent(current_player), root_player, weights)
-                if self._is_time_up(): break
-                if evaluation < min_eval:
-                    min_eval = evaluation
-                    best_move = move_path
-                beta = min(beta, evaluation)
-                if beta <= alpha: break
-            self.transposition_table[tt_key] = (min_eval, best_move)
-            return min_eval, best_move
-    
-    def _iterative_deepening_search(self, board_state, player, weights, time_limit):
-        self.start_time = time.time()
-        self.time_limit = time_limit
-        self.nodes_searched = 0
-        self.transposition_table = {}
-        depth = 1
-        best_move_overall = None
+        for move in legal_moves:
+            new_board_state = self.state.copy()
+            new_board_state.make_move(move['from'], move['to'])
 
-        while not self._is_time_up():
-            _, move = self._search(board_state, depth, -math.inf, math.inf, True, player, player, weights)
-            if not self._is_time_up():
-                best_move_overall = move
-            else:
+            child_node = Node(new_board_state, parent=self, move=move)
+            self.children.append(child_node)
+
+        self.is_fully_expanded = True
+        return self.children[0] if self.children else None
+
+    def rollout(self) -> int:
+        """
+        Simülasyon (veya playout) adımı.
+        Bu düğümün durumundan başlayarak oyun sonuna kadar rastgele hamleler oynar.
+        Oyunun sonucunu (1: kazanç, -1: kayıp, 0: beraberlik) döndürür.
+        """
+        current_rollout_state = self.state.copy()
+
+        while not current_rollout_state.is_game_over():
+            possible_moves = current_rollout_state.get_possible_moves()
+            if not possible_moves:
                 break
-            depth += 1
-        return best_move_overall
 
-    def get_computer_move(self, board_state, current_player, ai_weights, time_limit):
-        best_move_path = self._iterative_deepening_search(board_state, current_player, ai_weights, time_limit)
-        
-        if not best_move_path:
-            possible = rules.get_all_possible_moves(current_player, board_state)
-            if not possible["moves"]: return None
-            best_move_path = random.choice(possible["moves"])
-            
-        return {"move": (best_move_path[0], best_move_path[-1])}
+            # Rastgele bir hamle seç
+            action = random.choice(possible_moves)
+            current_rollout_state.make_move(action['from'], action['to'])
 
-    def get_evaluation_and_top_moves(self, board_state, player, weights, time_limit, num_moves=3):
-        self.start_time = time.time()
-        self.time_limit = time_limit
-        self.nodes_searched = 0
-        self.transposition_table = {}
-        
-        possible_moves = rules.get_all_possible_moves(player, board_state)
-        if not possible_moves['moves']:
-            return {"win_prob": 0.0, "top_moves": [], "nodes": 0}
+        winner = current_rollout_state.get_winner()
+        if winner is None:
+            return 0
+        # Sonucu, bu düğümdeki oyuncunun perspektifinden döndür
+        return 1 if winner == self.player_to_move else -1
 
-        moves_with_scores = []
-        depth = 1
-        while not self._is_time_up():
-             self._search(board_state, depth, -math.inf, math.inf, True, player, player, weights)
-             if self._is_time_up(): break
-             depth += 1
-
-        for move_path in possible_moves['moves']:
-            next_board = self._get_next_board_state(board_state, move_path, possible_moves['type'])
-            score, _ = self._search(next_board, depth-1, -math.inf, math.inf, False, rules.get_opponent(player), player, weights)
-            moves_with_scores.append({'move_path': move_path, 'score_raw': score, 'type': possible_moves['type']})
-        
-        moves_with_scores.sort(key=lambda x: x['score_raw'], reverse=True)
-        
-        top_moves_analysis = []
-        overall_score_raw = moves_with_scores[0]['score_raw'] if moves_with_scores else -99999
-
-        for item in moves_with_scores[:num_moves]:
-            pv = self._get_principal_variation(board_state, player, item['move_path'], item['type'], depth)
-            top_moves_analysis.append({
-                "variation": " ".join(pv),
-                "win_prob": self._convert_score_to_win_percentage(item['score_raw']),
-                "move_path": item['move_path'] 
-            })
-
-        return {
-            "win_prob": self._convert_score_to_win_percentage(overall_score_raw),
-            "top_moves": top_moves_analysis,
-            "nodes": self.nodes_searched
-        }
-
-    def _get_principal_variation(self, board, player, first_move_path, move_type, max_depth):
-        pv = [notation.path_to_notation(first_move_path, move_type)]
-        temp_board = self._get_next_board_state(board, first_move_path, move_type)
-        current_player = rules.get_opponent(player)
-        
-        for i in range(max_depth - 1):
-            board_tuple = tuple(map(tuple, temp_board))
-            best_move = None
-            for d in range(max_depth - i, 0, -1):
-                key = (board_tuple, d, current_player)
-                if key in self.transposition_table:
-                    _, best_move = self.transposition_table[key]
-                    if best_move: break
-            
-            if best_move:
-                possible = rules.get_all_possible_moves(current_player, temp_board)
-                current_move_type = 'normal'
-                if possible['type'] == 'capture':
-                    for capture_move in possible['moves']:
-                        if capture_move == best_move:
-                            current_move_type = 'capture'
-                            break
-                pv.append(notation.path_to_notation(best_move, current_move_type))
-                temp_board = self._get_next_board_state(temp_board, best_move, current_move_type)
-                current_player = rules.get_opponent(current_player)
+    def backpropagate(self, result: int):
+        """
+        Simülasyon sonucunu ağaçta yukarı doğru günceller.
+        """
+        node = self
+        while node is not None:
+            node.visits += 1
+            # Sonuç, her üst seviyedeki oyuncunun perspektifine göre ayarlanır.
+            # Eğer mevcut düğümün oyuncusu, sonucu getiren oyuncu ile aynı ise, bu bir kazançtır.
+            if node.player_to_move != self.player_to_move:
+                 node.wins -= result # Rakip için -1, bizim için +1 demek
             else:
-                break
-        return pv
+                 node.wins += result
 
-    def evaluate_board(self, board_state, player_for_eval, weights):
-        score = 0
-        piece_value = weights.get('piece_value', 100)
-        dama_value = weights.get('dama_value', 300)
-        advancement_bonus = weights.get('advancement_bonus', 3)
-        center_control_bonus = weights.get('center_control_bonus', 2)
-        defensive_bonus = weights.get('defensive_bonus', 1.5)
+            node = node.parent
 
-        for r in range(8):
-            for c in range(8):
-                piece = board_state[r][c]
-                if piece == ' ': continue
-                is_player_piece = (piece.upper() == player_for_eval)
-                current_piece_score = dama_value if piece.islower() else piece_value
-                pos_bonus = 0
-                if piece.upper() == 'W':
-                    pos_bonus += (7 - r) * advancement_bonus
-                    if r >= 4: pos_bonus += (r - 4) * defensive_bonus
-                else:
-                    pos_bonus += r * advancement_bonus
-                    if r <= 3: pos_bonus += (3 - r) * defensive_bonus
-                center_bonus = (3.5 - abs(3.5 - c)) * center_control_bonus
-                current_piece_score += pos_bonus + center_bonus
-                score += current_piece_score if is_player_piece else -current_piece_score
-        return score
+class MCTS:
+    """
+    Monte Carlo Tree Search algoritmasını yöneten ana sınıf.
+    """
+    def __init__(self, board: Board, time_limit_seconds=None, iteration_limit=None):
+        if time_limit_seconds is None and iteration_limit is None:
+            raise ValueError("Either time_limit_seconds or iteration_limit must be set.")
+
+        self.root = Node(state=board)
+        self.time_limit = time.time() + time_limit_seconds if time_limit_seconds else float('inf')
+        self.iteration_limit = iteration_limit if iteration_limit is not None else float('inf')
+
+    def run_search(self):
+        """
+        Belirlenen süre veya iterasyon limiti dolana kadar MCTS algoritmasını çalıştırır.
+        """
+        iterations = 0
+        while time.time() < self.time_limit and iterations < self.iteration_limit:
+
+            # 1. Selection: Kök'ten başlayarak umut vaat eden bir yaprak düğüme in.
+            leaf = self._select(self.root)
+
+            # 2. Expansion: Eğer oyun bitmediyse bu yaprağı genişlet.
+            if not leaf.is_fully_expanded:
+                leaf = leaf.expand()
+
+            # 3. Simulation (Rollout): Genişletilen düğümden oyun sonuna kadar simülasyon yap.
+            if leaf:
+                simulation_result = leaf.rollout()
+
+                # 4. Backpropagation: Simülasyon sonucunu ağaçta yukarı doğru yay.
+                leaf.backpropagate(simulation_result)
+
+            iterations += 1
+
+        print(f"MCTS search completed after {iterations} iterations.")
+
+    def _select(self, node: Node) -> Node:
+        """
+        Selection adımını gerçekleştirir.
+        """
+        current_node = node
+        while current_node.is_fully_expanded and not current_node.state.is_game_over():
+            current_node = current_node.select_best_child()
+        return current_node
+
+    def get_best_move(self):
+        """
+        Arama bittikten sonra en iyi hamleyi (en çok ziyaret edilen) ve değerlendirmeyi döndürür.
+        """
+        if not self.root.children:
+            return None, 0.0
+
+        # En çok ziyaret edilen (en güvenilir) hamleyi seç
+        best_child = max(self.root.children, key=lambda c: c.visits)
+
+        # Değerlendirme skoru: Kazanma oranı (-1 ile 1 arasında)
+        # Eğer hiç ziyaret edilmemişse, nötr bir skor (0) döndür
+        evaluation = (best_child.wins / best_child.visits) if best_child.visits > 0 else 0.0
+
+        return best_child.move, evaluation
+
+
+def find_best_move(board: Board, player_color: str, difficulty: str):
+    """
+    Belirtilen zorluk seviyesine göre MCTS kullanarak en iyi hamleyi bulur.
+
+    Args:
+        board: Mevcut oyun tahtası.
+        player_color: Hamle yapacak olan yapay zekanın rengi ('white' veya 'black').
+        difficulty: 'Easy', 'Medium', veya 'Hard'.
+
+    Returns:
+        (best_move, evaluation)
+        best_move: Sözlük formatında en iyi hamle.
+        evaluation: Tahtanın değerlendirme skoru (-1.0 ile 1.0 arası).
+    """
+
+    # Zorluk seviyesine göre iterasyon sayısını belirle
+    difficulty_map = {
+        'Easy': 100,
+        'Medium': 500,
+        'Hard': 2000
+    }
+    iterations = difficulty_map.get(difficulty, 500)
+
+    # MCTS'i başlat ve çalıştır
+    mcts = MCTS(board=board, iteration_limit=iterations)
+    mcts.run_search()
+
+    # En iyi hamleyi ve skoru al
+    best_move, evaluation = mcts.get_best_move()
+
+    # Eğer AI için hiç hamle bulunamazsa (oyun bitmiş olabilir)
+    if best_move is None:
+        return None, 0.0
+
+    print(f"AI ({player_color}, {difficulty}) found best move: {best_move} with eval: {evaluation:.2f}")
+
+    return best_move, evaluation
+
