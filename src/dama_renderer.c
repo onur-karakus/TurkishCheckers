@@ -431,41 +431,53 @@ static SDL_Texture *CreateFontTexture(SDL_Renderer *renderer) {
     int start_x = col * CHAR_SIZE;
     int start_y = row * CHAR_SIZE;
 
-    // 8x8 piksellik ikili karakter verisini 64x64 piksele bilineer enterpolasyon ve yumuşatma ile büyütüyoruz (Vector-like scaling)
+    // 8x8 piksellik ikili karakter verisinden 64x64 piksele gerçek Vektörel Mesafe Alanı (SDF) üretiyoruz (Euclidean SDF Rounding)
     for (int Y = 0; Y < CHAR_SIZE; Y++) {
-      float v = (Y + 0.5f) / CHAR_SIZE;
-      float py = v * 8.0f - 0.5f;
-      float fy0 = floorf(py);
-      int y0 = (int)fy0;
-      int y1 = y0 + 1;
-      float ty = py - fy0;
-      if (y0 < 0) { y0 = 0; y1 = 0; }
-      if (y1 > 7) { y0 = 7; y1 = 7; }
-
+      float py = ((Y + 0.5f) / CHAR_SIZE) * 8.0f; // 8x8 grid düzleminde dikey koordinat
       for (int X = 0; X < CHAR_SIZE; X++) {
-        float u = (X + 0.5f) / CHAR_SIZE;
-        float px = u * 8.0f - 0.5f;
-        float fx0 = floorf(px);
-        int x0 = (int)fx0;
-        int x1 = x0 + 1;
-        float tx = px - fx0;
-        if (x0 < 0) { x0 = 0; x1 = 0; }
-        if (x1 > 7) { x0 = 7; x1 = 7; }
+        float px = ((X + 0.5f) / CHAR_SIZE) * 8.0f; // 8x8 grid düzleminde yatay koordinat
 
-        // 8x8 ikili bitmap'ten değerleri çek
-        float v00 = ((font_data[i][y0] >> (7 - x0)) & 1) ? 1.0f : 0.0f;
-        float v10 = ((font_data[i][y0] >> (7 - x1)) & 1) ? 1.0f : 0.0f;
-        float v01 = ((font_data[i][y1] >> (7 - x0)) & 1) ? 1.0f : 0.0f;
-        float v11 = ((font_data[i][y1] >> (7 - x1)) & 1) ? 1.0f : 0.0f;
+        // 1. px, py koordinatının şeklin içinde (solid) olup olmadığını belirle
+        int grid_x = (int)floorf(px);
+        int grid_y = (int)floorf(py);
+        if (grid_x < 0) grid_x = 0; if (grid_x > 7) grid_x = 7;
+        if (grid_y < 0) grid_y = 0; if (grid_y > 7) grid_y = 7;
+        int is_solid = ((font_data[i][grid_y] >> (7 - grid_x)) & 1);
 
-        // Bilineer Enterpolasyon (Bilinear Interpolation)
-        float val = (1.0f - tx) * (1.0f - ty) * v00 +
-                    tx * (1.0f - ty) * v10 +
-                    (1.0f - tx) * ty * v01 +
-                    tx * ty * v11;
+        // 2. En yakın zıt renkli piksele olan en kısa Öklid mesafesini bul
+        float min_dist = 999.0f;
+        for (int gy = 0; gy < 8; gy++) {
+          for (int gx = 0; gx < 8; gx++) {
+            int target_solid = ((font_data[i][gy] >> (7 - gx)) & 1);
+            if (target_solid != is_solid) {
+              // Piksel merkezleri arasındaki mesafeyi hesapla
+              float dx = px - (gx + 0.5f);
+              float dy = py - (gy + 0.5f);
+              float dist = sqrtf(dx * dx + dy * dy);
+              if (dist < min_dist) {
+                min_dist = dist;
+              }
+            }
+          }
+        }
 
-        // Hermite s-eğrisi (Smoothstep) kullanarak yumuşak ve kavisli kenarlar elde ediyoruz (Perfect vector-like curves)
-        float alpha_f = val * val * (3.0f - 2.0f * val);
+        // Eğer zıt piksel bulunamazsa (tüm hücreler dolu veya boşsa)
+        if (min_dist > 99.0f) {
+          min_dist = 8.0f;
+        }
+
+        // Mesafe alanını imzala (İçerideyse pozitif, dışarıdaysa negatif)
+        float sd = is_solid ? min_dist : -min_dist;
+
+        // 3. Mesafe alanını yumuşak geçişli alpha kanalına dönüştür
+        float threshold = 0.0f;
+        float transition = 0.65f; // Yumuşak geçiş genişliği (grid birimi cinsinden)
+        float alpha_f = (sd - (threshold - transition)) / (2.0f * transition);
+        if (alpha_f < 0.0f) alpha_f = 0.0f;
+        if (alpha_f > 1.0f) alpha_f = 1.0f;
+
+        // Hermite s-eğrisi (Smoothstep) ile kavisleri ve geçiş yumuşaklığını mükemmelleştir
+        alpha_f = alpha_f * alpha_f * (3.0f - 2.0f * alpha_f);
 
         // Hücre kenarlarında taşmayı önlemek için sınırları hafifçe sıfıra yumuşat
         float border_dist_x = (X < CHAR_SIZE / 2) ? (float)X : (float)(CHAR_SIZE - 1 - X);
