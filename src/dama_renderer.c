@@ -14,17 +14,18 @@ static void logMessage(const char *prefix, const char *message);
 static void DrawText(SDL_Renderer *renderer, SDL_Texture *fontTexture,
                      const char *text, int x, int y, float scale,
                      SDL_Color color);
-static void DrawCircle(SDL_Renderer *renderer, int cX, int cY, int r);
+static void DrawCircle(SDL_Renderer *renderer, SDL_Texture *circleTexture, float cX, float cY, float r);
 static void DrawBoard(SDL_Renderer *renderer);
-static void DrawPiecesAndHighlights(SDL_Renderer *renderer, const Game *game);
+static void DrawPiecesAndHighlights(SDL_Renderer *renderer, SDL_Texture *circleTexture, const Game *game);
 static void DrawLastMoveHighlight(SDL_Renderer *renderer, const Game *game);
 static void DrawGameScene(SDL_Renderer *renderer, SDL_Texture *fontTexture,
-                           const Game *game);
+                          SDL_Texture *circleTexture, const Game *game);
 static void DrawMainMenuScene(SDL_Renderer *renderer, SDL_Texture *fontTexture,
                                const Game *game);
 static void DrawGameOverScene(SDL_Renderer *renderer, SDL_Texture *fontTexture,
                                const Game *game);
 static SDL_Texture *CreateFontTexture(SDL_Renderer *renderer);
+static SDL_Texture *CreateCircleTexture(SDL_Renderer *renderer);
 static void DrawPowerBar(SDL_Renderer *renderer, SDL_Texture *fontTexture,
                          const Game *game);
 
@@ -106,6 +107,14 @@ Renderer *Renderer_Create() {
   }
   logMessage("[RENDERER]", "Font texture başarıyla oluşturuldu.");
 
+  renderer->circleTexture = CreateCircleTexture(renderer->renderer);
+  if (!renderer->circleTexture) {
+    logMessage("[RENDERER]", "HATA: Daire texture oluşturulamadı!");
+    Renderer_Destroy(renderer);
+    return NULL;
+  }
+  logMessage("[RENDERER]", "Daire texture başarıyla oluşturuldu.");
+
   return renderer;
 }
 
@@ -114,6 +123,8 @@ void Renderer_Destroy(Renderer *renderer) {
     logMessage("[RENDERER]", "Renderer nesnesi ve SDL kaynakları yok ediliyor...");
     if (renderer->fontTexture)
       SDL_DestroyTexture(renderer->fontTexture);
+    if (renderer->circleTexture)
+      SDL_DestroyTexture(renderer->circleTexture);
     if (renderer->renderer)
       SDL_DestroyRenderer(renderer->renderer);
     if (renderer->window)
@@ -134,7 +145,7 @@ void Renderer_Draw(const Renderer *renderer, const Game *game) {
     DrawMainMenuScene(renderer->renderer, renderer->fontTexture, game);
     break;
   case STATE_IN_GAME:
-    DrawGameScene(renderer->renderer, renderer->fontTexture, game);
+    DrawGameScene(renderer->renderer, renderer->fontTexture, renderer->circleTexture, game);
     break;
   case STATE_GAME_OVER:
     DrawGameOverScene(renderer->renderer, renderer->fontTexture, game);
@@ -432,6 +443,52 @@ static SDL_Texture *CreateFontTexture(SDL_Renderer *renderer) {
   return texture;
 }
 
+static SDL_Texture *CreateCircleTexture(SDL_Renderer *renderer) {
+  int size = 512;
+  SDL_Surface *circleSurface = SDL_CreateSurface(size, size, SDL_PIXELFORMAT_RGBA32);
+  if (!circleSurface) {
+    logMessage("[RENDERER]", "HATA: Daire yüzeyi (surface) oluşturulamadı!");
+    return NULL;
+  }
+
+  const SDL_PixelFormatDetails *details = SDL_GetPixelFormatDetails(circleSurface->format);
+  Uint32 *pixels = (Uint32 *)circleSurface->pixels;
+  float center = (size - 1) / 2.0f;
+  float radius = (size / 2.0f) - 2.0f;
+
+  for (int y = 0; y < size; y++) {
+    float dy = y - center;
+    for (int x = 0; x < size; x++) {
+      float dx = x - center;
+      float dist = sqrtf(dx * dx + dy * dy);
+      Uint8 alpha = 0;
+      if (dist <= radius - 1.5f) {
+        alpha = 255;
+      } else if (dist < radius + 1.5f) {
+        // 3 piksellik geçiş alanı ile kusursuz pürüzsüzleştirme (3px transition zone for flawless AA)
+        float f = (radius + 1.5f - dist) / 3.0f;
+        if (f < 0.0f) f = 0.0f;
+        if (f > 1.0f) f = 1.0f;
+        alpha = (Uint8)(255.0f * f);
+      }
+      pixels[y * size + x] = SDL_MapRGBA(details, NULL, 255, 255, 255, alpha);
+    }
+  }
+
+  SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, circleSurface);
+  if (!texture) {
+    logMessage("[RENDERER]", "HATA: Daire texture oluşturulamadı!");
+    SDL_DestroySurface(circleSurface);
+    return NULL;
+  }
+
+  SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+  SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_LINEAR); // Linear (bilinear) interpolation
+
+  SDL_DestroySurface(circleSurface);
+  return texture;
+}
+
 static void DrawText(SDL_Renderer *renderer, SDL_Texture *fontTexture,
                      const char *text, int x, int y, float scale,
                      SDL_Color color) {
@@ -501,40 +558,19 @@ static void DrawText(SDL_Renderer *renderer, SDL_Texture *fontTexture,
   }
 }
 
-// Daire çizim algoritması (Premium Dama taşları için)
-static void DrawCircle(SDL_Renderer *renderer, int cX, int cY, int r) {
+// Dairesel texture çizim metodu (Kusursuz donanımsal pürüzsüzleştirme)
+static void DrawCircle(SDL_Renderer *renderer, SDL_Texture *circleTexture, float cX, float cY, float r) {
+  if (!circleTexture)
+    return;
+  
   Uint8 r_color, g_color, b_color, a_color;
   SDL_GetRenderDrawColor(renderer, &r_color, &g_color, &b_color, &a_color);
   
-  SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-
-  float radius = (float)r;
-  int minX = cX - r - 1;
-  int maxX = cX + r + 1;
-  int minY = cY - r - 1;
-  int maxY = cY + r + 1;
-
-  for (int y = minY; y <= maxY; y++) {
-    float dy = (float)(y - cY);
-    for (int x = minX; x <= maxX; x++) {
-      float dx = (float)(x - cX);
-      float dist = sqrtf(dx * dx + dy * dy);
-
-      if (dist <= radius - 0.5f) {
-        // Tamamen iç bölge (Katı Renk)
-        SDL_SetRenderDrawColor(renderer, r_color, g_color, b_color, a_color);
-        SDL_RenderPoint(renderer, (float)x, (float)y);
-      } else if (dist < radius + 0.5f) {
-        // Yumuşatılmış kenar sınırı (Anti-Aliased Edge)
-        float alpha_factor = (radius + 0.5f - dist);
-        if (alpha_factor > 0.0f) {
-          Uint8 final_alpha = (Uint8)(a_color * alpha_factor);
-          SDL_SetRenderDrawColor(renderer, r_color, g_color, b_color, final_alpha);
-          SDL_RenderPoint(renderer, (float)x, (float)y);
-        }
-      }
-    }
-  }
+  SDL_SetTextureColorMod(circleTexture, r_color, g_color, b_color);
+  SDL_SetTextureAlphaMod(circleTexture, a_color);
+  
+  SDL_FRect dstRect = { cX - r, cY - r, r * 2.0f, r * 2.0f };
+  SDL_RenderTexture(renderer, circleTexture, NULL, &dstRect);
 }
 
 static void DrawBoard(SDL_Renderer *renderer) {
@@ -553,7 +589,7 @@ static void DrawBoard(SDL_Renderer *renderer) {
   }
 }
 
-static void DrawPiecesAndHighlights(SDL_Renderer *renderer, const Game *game) {
+static void DrawPiecesAndHighlights(SDL_Renderer *renderer, SDL_Texture *circleTexture, const Game *game) {
   bool canMove[8][8] = {false};
   for (int i = 0; i < game->moveCount; i++) {
     canMove[game->possibleMoves[i].from.row][game->possibleMoves[i].from.col] =
@@ -571,7 +607,7 @@ static void DrawPiecesAndHighlights(SDL_Renderer *renderer, const Game *game) {
         if (canMove[i][j]) {
           SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
           SDL_SetRenderDrawColor(renderer, 46, 204, 113, 100);
-          DrawCircle(renderer, cX, cY, r + 10);
+          DrawCircle(renderer, circleTexture, cX, cY, r + 10);
         }
 
         // Taş Gövdesi Çizimi
@@ -582,7 +618,7 @@ static void DrawPiecesAndHighlights(SDL_Renderer *renderer, const Game *game) {
           // Siyah Taş Gövdesi (Koyu Antrasit)
           SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
         }
-        DrawCircle(renderer, cX, cY, r);
+        DrawCircle(renderer, circleTexture, cX, cY, r);
 
         // İç halka detayı (Taşı daha 3D/Premium gösterir)
         if (game->board[i][j] == BEYAZ_TAS || game->board[i][j] == BEYAZ_DAMA) {
@@ -590,12 +626,12 @@ static void DrawPiecesAndHighlights(SDL_Renderer *renderer, const Game *game) {
         } else {
           SDL_SetRenderDrawColor(renderer, 60, 60, 60, 255);
         }
-        DrawCircle(renderer, cX, cY, r - 12);
+        DrawCircle(renderer, circleTexture, cX, cY, r - 12);
 
         // Dama Taçı (Altın Sarısı göbek)
         if (game->board[i][j] == BEYAZ_DAMA || game->board[i][j] == SIYAH_DAMA) {
           SDL_SetRenderDrawColor(renderer, 241, 196, 15, 255); // Altın
-          DrawCircle(renderer, cX, cY, r / 2);
+          DrawCircle(renderer, circleTexture, cX, cY, r / 2);
         }
       }
     }
@@ -609,7 +645,7 @@ static void DrawPiecesAndHighlights(SDL_Renderer *renderer, const Game *game) {
         Koordinat to = game->possibleMoves[i].to;
         SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
         SDL_SetRenderDrawColor(renderer, 46, 204, 113, 160);
-        DrawCircle(renderer,
+        DrawCircle(renderer, circleTexture,
                    BOARD_OFFSET + to.col * SQUARE_SIZE + SQUARE_SIZE / 2,
                    BOARD_OFFSET + to.row * SQUARE_SIZE + SQUARE_SIZE / 2, 30);
       }
@@ -637,7 +673,7 @@ static void DrawLastMoveHighlight(SDL_Renderer *renderer, const Game *game) {
 }
 
 static void DrawGameScene(SDL_Renderer *renderer, SDL_Texture *fontTexture,
-                           const Game *game) {
+                          SDL_Texture *circleTexture, const Game *game) {
   DrawBoard(renderer);
 
   bool isReplay = (game->viewIndex < game->historyCount);
@@ -649,7 +685,7 @@ static void DrawGameScene(SDL_Renderer *renderer, SDL_Texture *fontTexture,
     tempGame.selectedPiece = (Koordinat){-1, -1};
     tempGame.lastMove = (Hamle){{-1, -1}, {-1, -1}};
 
-    DrawPiecesAndHighlights(renderer, &tempGame);
+    DrawPiecesAndHighlights(renderer, circleTexture, &tempGame);
 
     // Replay Göstergesi (Metin boyutu 2x ölçeklendi -> 4.0f)
     const char *replay_title = (game->language == 0) ? "GEÇMİŞ İZLENİYOR" : "REPLAY MODE";
@@ -671,7 +707,7 @@ static void DrawGameScene(SDL_Renderer *renderer, SDL_Texture *fontTexture,
 
   } else {
     DrawLastMoveHighlight(renderer, game);
-    DrawPiecesAndHighlights(renderer, game);
+    DrawPiecesAndHighlights(renderer, circleTexture, game);
   }
 
   DrawPowerBar(renderer, fontTexture, game);

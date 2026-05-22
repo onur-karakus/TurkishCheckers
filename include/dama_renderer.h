@@ -12,6 +12,7 @@ typedef struct {
     SDL_Window* window;
     SDL_Renderer* renderer;
     SDL_Texture* fontTexture;
+    SDL_Texture* circleTexture;
 } Renderer;
 
 
