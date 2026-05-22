@@ -464,16 +464,8 @@ static SDL_Texture *CreateFontTexture(SDL_Renderer *renderer) {
                     (1.0f - tx) * ty * v01 +
                     tx * ty * v11;
 
-        // Eşik değeri (threshold) etrafında yumuşatma uygulayarak kusursuz kenarlar elde ediyoruz
-        float edge_width = 0.12f;
-        float alpha_f = 0.0f;
-        if (val < 0.5f - edge_width) {
-          alpha_f = 0.0f;
-        } else if (val > 0.5f + edge_width) {
-          alpha_f = 1.0f;
-        } else {
-          alpha_f = (val - (0.5f - edge_width)) / (2.0f * edge_width);
-        }
+        // Hermite s-eğrisi (Smoothstep) kullanarak yumuşak ve kavisli kenarlar elde ediyoruz (Perfect vector-like curves)
+        float alpha_f = val * val * (3.0f - 2.0f * val);
 
         // Hücre kenarlarında taşmayı önlemek için sınırları hafifçe sıfıra yumuşat
         float border_dist_x = (X < CHAR_SIZE / 2) ? (float)X : (float)(CHAR_SIZE - 1 - X);
