@@ -408,9 +408,10 @@ static SDL_Texture *CreateFontTexture(SDL_Renderer *renderer) {
   font_data[139][6] = 0x3C;
   font_data[139][7] = 0x00;
 
-  const int FONT_WIDTH = 8, FONT_HEIGHT = 8, ATLAS_COLS = 16, ATLAS_ROWS = 16;
+  const int CHAR_SIZE = 64; // Her bir karakteri 64x64 piksellik yüksek çözünürlükte oluşturuyoruz.
+  const int ATLAS_COLS = 16, ATLAS_ROWS = 16;
   SDL_Surface *fontSurface =
-      SDL_CreateSurface(ATLAS_COLS * FONT_WIDTH, ATLAS_ROWS * FONT_HEIGHT,
+      SDL_CreateSurface(ATLAS_COLS * CHAR_SIZE, ATLAS_ROWS * CHAR_SIZE,
                         SDL_PIXELFORMAT_RGBA32);
   if (!fontSurface) {
     logMessage("[RENDERER]", "HATA: Font yüzeyi (surface) oluşturulamadı!");
@@ -419,25 +420,87 @@ static SDL_Texture *CreateFontTexture(SDL_Renderer *renderer) {
   
   SDL_FillSurfaceRect(
       fontSurface, NULL,
-      SDL_MapRGBA(SDL_GetPixelFormatDetails(fontSurface->format), NULL, 0, 0, 0,
-                  0));
+      SDL_MapRGBA(SDL_GetPixelFormatDetails(fontSurface->format), NULL, 0, 0, 0, 0));
+  
+  const SDL_PixelFormatDetails *details = SDL_GetPixelFormatDetails(fontSurface->format);
+  Uint32 *pixels = (Uint32 *)fontSurface->pixels;
   
   for (int i = 0; i < 256; i++) {
-    for (int y = 0; y < FONT_HEIGHT; y++) {
-      for (int x = 0; x < FONT_WIDTH; x++) {
-        if ((font_data[i][y] >> (7 - x)) & 1) {
-          ((Uint32 *)fontSurface->pixels)[(i / ATLAS_COLS * FONT_HEIGHT + y) * fontSurface->w +
-                                          (i % ATLAS_COLS * FONT_WIDTH + x)] = 0xFFFFFFFF;
+    int col = i % ATLAS_COLS;
+    int row = i / ATLAS_COLS;
+    int start_x = col * CHAR_SIZE;
+    int start_y = row * CHAR_SIZE;
+
+    // 8x8 piksellik ikili karakter verisini 64x64 piksele bilineer enterpolasyon ve yumuşatma ile büyütüyoruz (Vector-like scaling)
+    for (int Y = 0; Y < CHAR_SIZE; Y++) {
+      float v = (Y + 0.5f) / CHAR_SIZE;
+      float py = v * 8.0f - 0.5f;
+      float fy0 = floorf(py);
+      int y0 = (int)fy0;
+      int y1 = y0 + 1;
+      float ty = py - fy0;
+      if (y0 < 0) { y0 = 0; y1 = 0; }
+      if (y1 > 7) { y0 = 7; y1 = 7; }
+
+      for (int X = 0; X < CHAR_SIZE; X++) {
+        float u = (X + 0.5f) / CHAR_SIZE;
+        float px = u * 8.0f - 0.5f;
+        float fx0 = floorf(px);
+        int x0 = (int)fx0;
+        int x1 = x0 + 1;
+        float tx = px - fx0;
+        if (x0 < 0) { x0 = 0; x1 = 0; }
+        if (x1 > 7) { x0 = 7; x1 = 7; }
+
+        // 8x8 ikili bitmap'ten değerleri çek
+        float v00 = ((font_data[i][y0] >> (7 - x0)) & 1) ? 1.0f : 0.0f;
+        float v10 = ((font_data[i][y0] >> (7 - x1)) & 1) ? 1.0f : 0.0f;
+        float v01 = ((font_data[i][y1] >> (7 - x0)) & 1) ? 1.0f : 0.0f;
+        float v11 = ((font_data[i][y1] >> (7 - x1)) & 1) ? 1.0f : 0.0f;
+
+        // Bilineer Enterpolasyon (Bilinear Interpolation)
+        float val = (1.0f - tx) * (1.0f - ty) * v00 +
+                    tx * (1.0f - ty) * v10 +
+                    (1.0f - tx) * ty * v01 +
+                    tx * ty * v11;
+
+        // Eşik değeri (threshold) etrafında yumuşatma uygulayarak kusursuz kenarlar elde ediyoruz
+        float edge_width = 0.12f;
+        float alpha_f = 0.0f;
+        if (val < 0.5f - edge_width) {
+          alpha_f = 0.0f;
+        } else if (val > 0.5f + edge_width) {
+          alpha_f = 1.0f;
+        } else {
+          alpha_f = (val - (0.5f - edge_width)) / (2.0f * edge_width);
         }
+
+        // Hücre kenarlarında taşmayı önlemek için sınırları hafifçe sıfıra yumuşat
+        float border_dist_x = (X < CHAR_SIZE / 2) ? (float)X : (float)(CHAR_SIZE - 1 - X);
+        float border_dist_y = (Y < CHAR_SIZE / 2) ? (float)Y : (float)(CHAR_SIZE - 1 - Y);
+        float min_border = (border_dist_x < border_dist_y) ? border_dist_x : border_dist_y;
+        if (min_border < 2.0f) {
+          alpha_f *= (min_border / 2.0f);
+        }
+
+        Uint8 alpha = (Uint8)(255.0f * alpha_f);
+        pixels[(start_y + Y) * fontSurface->w + (start_x + X)] =
+            SDL_MapRGBA(details, NULL, 255, 255, 255, alpha);
       }
     }
   }
 
   SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, fontSurface);
+  if (!texture) {
+    logMessage("[RENDERER]", "HATA: Font texture oluşturulamadı!");
+    SDL_DestroySurface(fontSurface);
+    return NULL;
+  }
+  
   SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
   
-  // Retro pixel art yazı tiplerini yüksek çözünürlükte keskinleştirmek için Nearest filtreleme uyguluyoruz:
-  SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
+  // Yüksek çözünürlüklü fontumuzu pürüzsüz ölçeklemek için doğrusal (linear) filtreleme uyguluyoruz
+  SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_LINEAR);
   
   SDL_DestroySurface(fontSurface);
   return texture;
@@ -495,7 +558,9 @@ static void DrawText(SDL_Renderer *renderer, SDL_Texture *fontTexture,
   if (!fontTexture)
     return;
   SDL_SetTextureColorMod(fontTexture, color.r, color.g, color.b);
-  const int FONT_WIDTH = 8, FONT_HEIGHT = 8, ATLAS_COLS = 16;
+  const int CHAR_SIZE = 64; // Büyütülmüş font atlasındaki kaynak boyutu (Source size)
+  const int DISPLAY_SIZE = 8; // Mantıksal düzendeki yerleşim boyutu (Display layout size)
+  const int ATLAS_COLS = 16;
 
   int cursorX = x;
 
@@ -547,14 +612,14 @@ static void DrawText(SDL_Renderer *renderer, SDL_Texture *fontTexture,
       }
     }
 
-    SDL_FRect srcRect = {(float)((index % ATLAS_COLS) * FONT_WIDTH),
-                         (float)((index / ATLAS_COLS) * FONT_HEIGHT),
-                         (float)FONT_WIDTH, (float)FONT_HEIGHT};
-    SDL_FRect dstRect = {(float)cursorX, (float)y, FONT_WIDTH * scale,
-                         FONT_HEIGHT * scale};
+    SDL_FRect srcRect = {(float)((index % ATLAS_COLS) * CHAR_SIZE),
+                         (float)((index / ATLAS_COLS) * CHAR_SIZE),
+                         (float)CHAR_SIZE, (float)CHAR_SIZE};
+    SDL_FRect dstRect = {(float)cursorX, (float)y, DISPLAY_SIZE * scale,
+                         DISPLAY_SIZE * scale};
     SDL_RenderTexture(renderer, fontTexture, &srcRect, &dstRect);
 
-    cursorX += FONT_WIDTH * scale;
+    cursorX += DISPLAY_SIZE * scale;
   }
 }
 
