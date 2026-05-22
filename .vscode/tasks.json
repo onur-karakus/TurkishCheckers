@@ -1,0 +1,27 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build Dama (make)",
+            "type": "shell",
+            "command": "make",
+            "args": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "detail": "Compiles the entire project using the Makefile."
+        },
+        {
+            "label": "Clean Dama (make clean)",
+            "type": "shell",
+            "command": "make clean",
+            "args": [],
+            "problemMatcher": [],
+            "detail": "Cleans build artifacts and executables."
+        }
+    ]
+}

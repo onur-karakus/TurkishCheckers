@@ -1,0 +1,40 @@
+# macOS Sistem Dosyaları
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+
+# Derleme ve Ara Dosyalar (Build & Object Files)
+*.o
+*.obj
+*.out
+src/*.o
+
+# Hata Ayıklama Dosyaları (Debug Artifacts)
+*.dSYM/
+dama.dSYM/
+
+# Çalıştırılabilir İkili Dosyalar (Executables)
+Dama
+DamaOyunu
+DamaOyunu.app
+Dama.app
+
+# VS Code Özelleştirmeleri (Kişisel/Hata Ayıklama Artıkları)
+.vscode/.suo
+.vscode/*.code-workspace
+.vscode/ipch/
+.vscode/browse.VC.db
+.vscode/browse.vc.db-journal
+.vscode/Browse.vc.db
+
+# CMake Derleme Klasörleri (CMake Build Folders)
+build/
+CMakeCache.txt
+CMakeFiles/
+Makefile2
+cmake_install.cmake
+install_local/

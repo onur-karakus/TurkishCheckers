@@ -1,0 +1,19 @@
+// .vscode/launch.json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(lldb) Launch Dama",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Dama",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "preLaunchTask": "Build Dama (make)"
+        }
+    ]
+}
