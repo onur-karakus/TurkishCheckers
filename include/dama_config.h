@@ -5,7 +5,7 @@
 // --- Pencere ve Ekran Fiziksel Ayarları ---
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 900 
-#define WINDOW_TITLE "Türk Daması"
+#define WINDOW_TITLE "Türk Daması [v2]"
 
 // --- Mantıksal Çözünürlük (HiDPI için 2x Ölçekli Çözünürlük) ---
 #define LOGICAL_WIDTH 1600

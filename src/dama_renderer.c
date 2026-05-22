@@ -492,7 +492,11 @@ static SDL_Texture *CreateFontTexture(SDL_Renderer *renderer) {
   SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
   
   // Yüksek çözünürlüklü fontumuzu pürüzsüz ölçeklemek için doğrusal (linear) filtreleme uyguluyoruz
-  SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_LINEAR);
+  if (!SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_LINEAR)) {
+    logMessage("[RENDERER]", "UYARI: Font texture scale mode LINEAR olarak ayarlanamadı!");
+  } else {
+    logMessage("[RENDERER]", "Font texture scale mode başarıyla LINEAR yapıldı.");
+  }
   
   SDL_DestroySurface(fontSurface);
   return texture;
@@ -538,7 +542,11 @@ static SDL_Texture *CreateCircleTexture(SDL_Renderer *renderer) {
   }
 
   SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
-  SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_LINEAR); // Linear (bilinear) interpolation
+  if (!SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_LINEAR)) {
+    logMessage("[RENDERER]", "UYARI: Daire texture scale mode LINEAR olarak ayarlanamadı!");
+  } else {
+    logMessage("[RENDERER]", "Daire texture scale mode başarıyla LINEAR yapıldı.");
+  }
 
   SDL_DestroySurface(circleSurface);
   return texture;
