@@ -1135,15 +1135,15 @@ static void DrawMainMenuScene(SDL_Renderer *renderer, SDL_Texture *fontTexture,
              3.0f, (SDL_Color){255, 255, 255, 255});
 
     // Zorluk (Minimax Derinliği)
-    const char *diff_txt = (game->language == 0) ? "Yapay Zeka Derinliği" : "AI Difficulty";
+    const char *diff_txt = (game->language == 0) ? "Zorluk" : "Difficulty";
     float diff_w = GetTextWidth(diff_txt, 3.5f);
     DrawText(renderer, fontTexture, diff_txt, LOGICAL_WIDTH / 2 - diff_w / 2, 
              870, 3.5f, (SDL_Color){220, 225, 230, 255});
 
     int depths[] = {4, 6, 8, 10, 12};
-    int btnWidth = 100;
+    int btnWidth = 136;
     int btnHeight = 80;
-    int gap = 20;
+    int gap = 16;
     int totalWidth = (5 * btnWidth) + (4 * gap);
     int startX = (LOGICAL_WIDTH - totalWidth) / 2;
     int y = 920;
@@ -1167,9 +1167,29 @@ static void DrawMainMenuScene(SDL_Renderer *renderer, SDL_Texture *fontTexture,
         SDL_RenderRect(renderer, &border);
       }
 
-      char numStr[4];
-      sprintf(numStr, "%d", depths[i]);
-      DrawText(renderer, fontTexture, numStr, btn.x + 30, btn.y + 24, 3.0f,
+      const char *label = "";
+      if (game->language == 0) {
+        switch (i) {
+          case 0: label = "Çok Kolay"; break;
+          case 1: label = "Kolay"; break;
+          case 2: label = "Orta"; break;
+          case 3: label = "Zor"; break;
+          case 4: label = "Çok Zor"; break;
+        }
+      } else {
+        switch (i) {
+          case 0: label = "Very Easy"; break;
+          case 1: label = "Easy"; break;
+          case 2: label = "Medium"; break;
+          case 3: label = "Hard"; break;
+          case 4: label = "Very Hard"; break;
+        }
+      }
+
+      float label_w = GetTextWidth(label, 2.2f);
+      float label_x = btn.x + (btn.w - label_w) / 2.0f;
+      float label_y = btn.y + (btn.h - (8.0f * 2.2f)) / 2.0f;
+      DrawText(renderer, fontTexture, label, label_x, label_y, 2.2f,
                (SDL_Color){30, 30, 30, 255});
     }
   }

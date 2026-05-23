@@ -845,14 +845,14 @@ void Game_HandleMenuClick(Game *game, int x, int y) {
       logMessage("[MENU]", "Taraf seçildi: Siyah (AI Beyaz)");
     }
 
-    // Zorluk Seçimi (4, 6, 8, 10, 12)
-    // 5 buton, genişlik 100, boşluk 20. Toplam Genişlik = 580.
-    // Başlangıç X = (LOGICAL_WIDTH - 580) / 2 = 510
+    // Zorluk Seçimi (Çok Kolay, Kolay, Orta, Zor, Çok Zor)
+    // 5 buton, genişlik 136, boşluk 16. Toplam Genişlik = 744.
+    // Başlangıç X = (LOGICAL_WIDTH - 744) / 2 = 428
     // Y = 920, Yükseklik = 80
     int depths[] = {4, 6, 8, 10, 12};
-    int btnWidth = 100;
+    int btnWidth = 136;
     int btnHeight = 80;
-    int gap = 20;
+    int gap = 16;
     int totalWidth = (5 * btnWidth) + (4 * gap);
 
     int startX = (LOGICAL_WIDTH - totalWidth) / 2;
