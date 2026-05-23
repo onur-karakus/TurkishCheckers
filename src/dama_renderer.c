@@ -3,17 +3,21 @@
 #include "dama_renderer.h"
 #include <SDL3/SDL_error.h> // SDL_GetError için eklendi
 #include <SDL3/SDL_hints.h> // SDL_SetHint için eklendi
+#include <SDL3_ttf/SDL_ttf.h> // SDL3_ttf için eklendi
 #include <stdio.h>          // sprintf için
 #include <stdlib.h>         // malloc ve free için eklendi
 #include <string.h>         // strlen için eklendi
 #include <time.h>           // Zaman damgalı loglar için eklendi
 #include <math.h>           // Analitik Anti-Aliasing (sqrtf) için eklendi
 
+static float fontWidths[256] = {0.0f};
+
 // --- Dahili Fonksiyon Prototipleri (Bu dosyaya özel) ---
 static void logMessage(const char *prefix, const char *message);
 static void DrawText(SDL_Renderer *renderer, SDL_Texture *fontTexture,
                      const char *text, int x, int y, float scale,
                      SDL_Color color);
+static float GetTextWidth(const char *text, float scale);
 static void DrawCircle(SDL_Renderer *renderer, SDL_Texture *circleTexture, float cX, float cY, float r);
 static void DrawBoard(SDL_Renderer *renderer);
 static void DrawPiecesAndHighlights(SDL_Renderer *renderer, SDL_Texture *circleTexture, const Game *game);
@@ -60,6 +64,10 @@ Renderer *Renderer_Create() {
     return NULL;
   }
   logMessage("[RENDERER]", "SDL_Init başarıyla tamamlandı.");
+
+  if (!TTF_Init()) {
+    logMessage("[RENDERER]", "UYARI: TTF_Init başlatılamadı!");
+  }
 
   // HiDPI ve Ölçeklenebilirlik desteği ekliyoruz:
   renderer->window =
@@ -132,6 +140,7 @@ void Renderer_Destroy(Renderer *renderer) {
     free(renderer);
     logMessage("[RENDERER]", "Tüm kaynaklar serbest bırakıldı.");
   }
+  TTF_Quit();
   SDL_Quit();
 }
 
@@ -408,81 +417,171 @@ static SDL_Texture *CreateFontTexture(SDL_Renderer *renderer) {
   font_data[139][6] = 0x3C;
   font_data[139][7] = 0x00;
 
-  const int CHAR_SIZE = 64; // Her bir karakteri 64x64 piksellik yüksek çözünürlükte oluşturuyoruz.
+  // 1. Orijinal bir vektör yazı tipini (Arial veya özel font) yüklemeye çalışıyoruz
+  const char *basePath = SDL_GetBasePath();
+  char customFontPath[1024] = {0};
+  if (basePath) {
+    snprintf(customFontPath, sizeof(customFontPath), "%sfont.ttf", basePath);
+  } else {
+    strncpy(customFontPath, "font.ttf", sizeof(customFontPath));
+  }
+
+  const char *font_paths[] = {
+    customFontPath,
+    "font.ttf", // Proje dizinine atılabilecek özel font
+    "/System/Library/Fonts/Supplemental/Arial Rounded Bold.ttf", // macOS Arial Rounded Bold (Harika ve kalın oyun fontu)
+    "/System/Library/Fonts/Supplemental/Arial Bold.ttf", // macOS Arial Bold (Daha kalın ve oturaklı)
+    "/System/Library/Fonts/Supplemental/Verdana Bold.ttf", // macOS Verdana Bold
+    "/System/Library/Fonts/Supplemental/Trebuchet MS Bold.ttf", // macOS Trebuchet MS Bold
+    "/System/Library/Fonts/Supplemental/Arial.ttf", // macOS Arial yolu
+    "/Library/Fonts/Arial.ttf",
+    "C:\\Windows\\Fonts\\arialbd.ttf", // Windows Arial Bold
+    "C:\\Windows\\Fonts\\arial.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", // Linux DejaVu Sans Bold
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+  };
+
+  TTF_Font *font = NULL;
+  int num_paths = sizeof(font_paths) / sizeof(font_paths[0]);
+  for (int i = 0; i < num_paths; i++) {
+    font = TTF_OpenFont(font_paths[i], 80.0f); // 80pt boyutunda ultra keskin render et!
+    if (font) {
+      char logMsg[256];
+      sprintf(logMsg, "Font başarıyla yüklendi: %s", font_paths[i]);
+      logMessage("[RENDERER]", logMsg);
+      break;
+    }
+  }
+
+  const int CHAR_SIZE = 96; // Atlas içinde her harf hücresini 96x96 piksel yapıyoruz (Mükemmel kalite için)
   const int ATLAS_COLS = 16, ATLAS_ROWS = 16;
   SDL_Surface *fontSurface =
       SDL_CreateSurface(ATLAS_COLS * CHAR_SIZE, ATLAS_ROWS * CHAR_SIZE,
                         SDL_PIXELFORMAT_RGBA32);
   if (!fontSurface) {
     logMessage("[RENDERER]", "HATA: Font yüzeyi (surface) oluşturulamadı!");
+    if (font) TTF_CloseFont(font);
     return NULL;
   }
   
   SDL_FillSurfaceRect(
       fontSurface, NULL,
       SDL_MapRGBA(SDL_GetPixelFormatDetails(fontSurface->format), NULL, 0, 0, 0, 0));
-  
-  const SDL_PixelFormatDetails *details = SDL_GetPixelFormatDetails(fontSurface->format);
-  Uint32 *pixels = (Uint32 *)fontSurface->pixels;
-  
-  for (int i = 0; i < 256; i++) {
-    int col = i % ATLAS_COLS;
-    int row = i / ATLAS_COLS;
-    int start_x = col * CHAR_SIZE;
-    int start_y = row * CHAR_SIZE;
 
-    // 8x8 piksellik ikili karakter verisini 64x64 piksele bilineer enterpolasyon ve yumuşatma ile büyütüyoruz (Vector-like scaling)
-    for (int Y = 0; Y < CHAR_SIZE; Y++) {
-      float v = (Y + 0.5f) / CHAR_SIZE;
-      float py = v * 8.0f - 0.5f;
-      float fy0 = floorf(py);
-      int y0 = (int)fy0;
-      int y1 = y0 + 1;
-      float ty = py - fy0;
-      if (y0 < 0) { y0 = 0; y1 = 0; }
-      if (y1 > 7) { y0 = 7; y1 = 7; }
+  if (font) {
+    // SDL_ttf kullanarak harika vektörel karakter atlası oluşturuyoruz!
+    for (int i = 0; i < 256; i++) {
+      int col = i % ATLAS_COLS;
+      int row = i / ATLAS_COLS;
+      int start_x = col * CHAR_SIZE;
+      int start_y = row * CHAR_SIZE;
 
-      for (int X = 0; X < CHAR_SIZE; X++) {
-        float u = (X + 0.5f) / CHAR_SIZE;
-        float px = u * 8.0f - 0.5f;
-        float fx0 = floorf(px);
-        int x0 = (int)fx0;
-        int x1 = x0 + 1;
-        float tx = px - fx0;
-        if (x0 < 0) { x0 = 0; x1 = 0; }
-        if (x1 > 7) { x0 = 7; x1 = 7; }
-
-        // 8x8 ikili bitmap'ten değerleri çek
-        float v00 = ((font_data[i][y0] >> (7 - x0)) & 1) ? 1.0f : 0.0f;
-        float v10 = ((font_data[i][y0] >> (7 - x1)) & 1) ? 1.0f : 0.0f;
-        float v01 = ((font_data[i][y1] >> (7 - x0)) & 1) ? 1.0f : 0.0f;
-        float v11 = ((font_data[i][y1] >> (7 - x1)) & 1) ? 1.0f : 0.0f;
-
-        // Bilineer Enterpolasyon (Bilinear Interpolation)
-        float val = (1.0f - tx) * (1.0f - ty) * v00 +
-                    tx * (1.0f - ty) * v10 +
-                    (1.0f - tx) * ty * v01 +
-                    tx * ty * v11;
-
-        // Yumuşak geçişli vektörel kenar yumuşatma (Wide-range continuous smoothstep)
-        float edge_low = 0.15f;
-        float edge_high = 0.85f;
-        float t = (val - edge_low) / (edge_high - edge_low);
-        if (t < 0.0f) t = 0.0f;
-        if (t > 1.0f) t = 1.0f;
-        float alpha_f = t * t * (3.0f - 2.0f * t);
-
-        // Hücre kenarlarında taşmayı önlemek için sınırları hafifçe sıfıra yumuşat
-        float border_dist_x = (X < CHAR_SIZE / 2) ? (float)X : (float)(CHAR_SIZE - 1 - X);
-        float border_dist_y = (Y < CHAR_SIZE / 2) ? (float)Y : (float)(CHAR_SIZE - 1 - Y);
-        float min_border = (border_dist_x < border_dist_y) ? border_dist_x : border_dist_y;
-        if (min_border < 2.0f) {
-          alpha_f *= (min_border / 2.0f);
+      char buf[4];
+      const char *utf8_str = "";
+      if (i < 128) {
+        buf[0] = (char)i;
+        buf[1] = '\0';
+        utf8_str = buf;
+      } else {
+        switch (i) {
+          case 128: utf8_str = "ç"; break;
+          case 129: utf8_str = "ğ"; break;
+          case 130: utf8_str = "ı"; break;
+          case 131: utf8_str = "ö"; break;
+          case 132: utf8_str = "ş"; break;
+          case 133: utf8_str = "ü"; break;
+          case 134: utf8_str = "Ç"; break;
+          case 135: utf8_str = "Ğ"; break;
+          case 136: utf8_str = "İ"; break;
+          case 137: utf8_str = "Ö"; break;
+          case 138: utf8_str = "Ş"; break;
+          case 139: utf8_str = "Ü"; break;
+          default: utf8_str = "?"; break;
         }
+      }
 
-        Uint8 alpha = (Uint8)(255.0f * alpha_f);
-        pixels[(start_y + Y) * fontSurface->w + (start_x + X)] =
-            SDL_MapRGBA(details, NULL, 255, 255, 255, alpha);
+      SDL_Surface *glyphSurface = TTF_RenderText_Blended(font, utf8_str, 0, (SDL_Color){255, 255, 255, 255});
+      if (glyphSurface && glyphSurface->w > 0) {
+        fontWidths[i] = (float)glyphSurface->w;
+        // Harfi hücre içinde sola yaslı ve dikey olarak ortalı çiziyoruz (Kusursuz pürüzsüz yerleşim)
+        SDL_Rect dstRect = {
+          start_x,
+          start_y + (CHAR_SIZE - glyphSurface->h) / 2,
+          glyphSurface->w,
+          glyphSurface->h
+        };
+        SDL_BlitSurface(glyphSurface, NULL, fontSurface, &dstRect);
+        SDL_DestroySurface(glyphSurface);
+      } else {
+        // Eğer boşluk veya çizilemeyen karakter ise varsayılan genişlik ver
+        if (i == ' ') {
+          fontWidths[i] = 24.0f; // 80pt font için boşluk genişliği
+        } else {
+          fontWidths[i] = 32.0f; // Varsayılan karakter genişliği
+        }
+      }
+    }
+    TTF_CloseFont(font);
+  } else {
+    // TTF fontu bulunamazsa yedek olarak çoklu-pürüzsüzleştirilmiş bitmap atlas oluştur
+    logMessage("[RENDERER]", "UYARI: Herhangi bir TTF fontu bulunamadı, upscaled bitmap fonta geri dönülüyor.");
+    const SDL_PixelFormatDetails *details = SDL_GetPixelFormatDetails(fontSurface->format);
+    Uint32 *pixels = (Uint32 *)fontSurface->pixels;
+    for (int i = 0; i < 256; i++) {
+      fontWidths[i] = 96.0f; // Bitmap modunda tüm karakter genişlikleri tam hücredir
+      int col = i % ATLAS_COLS;
+      int row = i / ATLAS_COLS;
+      int start_x = col * CHAR_SIZE;
+      int start_y = row * CHAR_SIZE;
+
+      for (int Y = 0; Y < CHAR_SIZE; Y++) {
+        float v = (Y + 0.5f) / CHAR_SIZE;
+        float py = v * 8.0f - 0.5f;
+        float fy0 = floorf(py);
+        int y0 = (int)fy0;
+        int y1 = y0 + 1;
+        float ty = py - fy0;
+        if (y0 < 0) { y0 = 0; y1 = 0; }
+        if (y1 > 7) { y0 = 7; y1 = 7; }
+
+        for (int X = 0; X < CHAR_SIZE; X++) {
+          float u = (X + 0.5f) / CHAR_SIZE;
+          float px = u * 8.0f - 0.5f;
+          float fx0 = floorf(px);
+          int x0 = (int)fx0;
+          int x1 = x0 + 1;
+          float tx = px - fx0;
+          if (x0 < 0) { x0 = 0; x1 = 0; }
+          if (x1 > 7) { x0 = 7; x1 = 7; }
+
+          float v00 = ((font_data[i][y0] >> (7 - x0)) & 1) ? 1.0f : 0.0f;
+          float v10 = ((font_data[i][y0] >> (7 - x1)) & 1) ? 1.0f : 0.0f;
+          float v01 = ((font_data[i][y1] >> (7 - x0)) & 1) ? 1.0f : 0.0f;
+          float v11 = ((font_data[i][y1] >> (7 - x1)) & 1) ? 1.0f : 0.0f;
+
+          float val = (1.0f - tx) * (1.0f - ty) * v00 +
+                      tx * (1.0f - ty) * v10 +
+                      (1.0f - tx) * ty * v01 +
+                      tx * ty * v11;
+
+          float edge_low = 0.15f;
+          float edge_high = 0.85f;
+          float t = (val - edge_low) / (edge_high - edge_low);
+          if (t < 0.0f) t = 0.0f;
+          if (t > 1.0f) t = 1.0f;
+          float alpha_f = t * t * (3.0f - 2.0f * t);
+
+          float border_dist_x = (X < CHAR_SIZE / 2) ? (float)X : (float)(CHAR_SIZE - 1 - X);
+          float border_dist_y = (Y < CHAR_SIZE / 2) ? (float)Y : (float)(CHAR_SIZE - 1 - Y);
+          float min_border = (border_dist_x < border_dist_y) ? border_dist_x : border_dist_y;
+          if (min_border < 2.0f) {
+            alpha_f *= (min_border / 2.0f);
+          }
+
+          Uint8 alpha = (Uint8)(255.0f * alpha_f);
+          pixels[(start_y + Y) * fontSurface->w + (start_x + X)] =
+              SDL_MapRGBA(details, NULL, 255, 255, 255, alpha);
+        }
       }
     }
   }
@@ -557,17 +656,67 @@ static SDL_Texture *CreateCircleTexture(SDL_Renderer *renderer) {
   return texture;
 }
 
+static float GetTextWidth(const char *text, float scale) {
+  const int DISPLAY_SIZE = 8;
+  float width = 0.0f;
+  for (int i = 0; text[i] != '\0'; i++) {
+    unsigned char c = (unsigned char)text[i];
+    int index = 0;
+
+    // UTF-8 Ayrıştırma (Türkçe Karakterler için)
+    if (c < 128) {
+      index = c;
+    } else {
+      unsigned char next = (unsigned char)text[i + 1];
+      if (next == '\0')
+        break;
+
+      if (c == 0xC3) {
+        if (next == 0xA7) index = 128; // ç
+        else if (next == 0x87) index = 134; // Ç
+        else if (next == 0xB6) index = 131; // ö
+        else if (next == 0x96) index = 137; // Ö
+        else if (next == 0xBC) index = 133; // ü
+        else if (next == 0x9C) index = 139; // Ü
+      } else if (c == 0xC4) {
+        if (next == 0x9F) index = 129; // ğ
+        else if (next == 0x9E) index = 135; // Ğ
+        else if (next == 0xB1) index = 130; // ı
+        else if (next == 0xB0) index = 136; // İ
+      } else if (c == 0xC5) {
+        if (next == 0x9F) index = 132; // ş
+        else if (next == 0x9E) index = 138; // Ş
+      }
+
+      if (index != 0) {
+        i++; // Çok baytlı karakterin 2. baytını geç
+      } else {
+        index = '?'; // Bilinmeyen karakter
+      }
+    }
+
+    float widthVal = fontWidths[index];
+    if (widthVal <= 0.0f) {
+      widthVal = (index == ' ') ? 24.0f : 32.0f;
+    }
+
+    float drawWidth = (widthVal / 96.0f) * DISPLAY_SIZE * scale;
+    width += drawWidth + (0.5f * scale);
+  }
+  return width;
+}
+
 static void DrawText(SDL_Renderer *renderer, SDL_Texture *fontTexture,
                      const char *text, int x, int y, float scale,
                      SDL_Color color) {
   if (!fontTexture)
     return;
   SDL_SetTextureColorMod(fontTexture, color.r, color.g, color.b);
-  const int CHAR_SIZE = 64; // Büyütülmüş font atlasındaki kaynak boyutu (Source size)
+  const int CHAR_SIZE = 96; // Büyütülmüş font atlasındaki kaynak boyutu (Source size)
   const int DISPLAY_SIZE = 8; // Mantıksal düzendeki yerleşim boyutu (Display layout size)
   const int ATLAS_COLS = 16;
 
-  int cursorX = x;
+  float cursorX = (float)x;
 
   for (int i = 0; text[i] != '\0'; i++) {
     unsigned char c = (unsigned char)text[i];
@@ -617,14 +766,20 @@ static void DrawText(SDL_Renderer *renderer, SDL_Texture *fontTexture,
       }
     }
 
+    float widthVal = fontWidths[index];
+    if (widthVal <= 0.0f) {
+      widthVal = (index == ' ') ? 24.0f : 32.0f;
+    }
+
     SDL_FRect srcRect = {(float)((index % ATLAS_COLS) * CHAR_SIZE),
                          (float)((index / ATLAS_COLS) * CHAR_SIZE),
-                         (float)CHAR_SIZE, (float)CHAR_SIZE};
-    SDL_FRect dstRect = {(float)cursorX, (float)y, DISPLAY_SIZE * scale,
-                         DISPLAY_SIZE * scale};
+                         widthVal, (float)CHAR_SIZE};
+    float drawWidth = (widthVal / (float)CHAR_SIZE) * DISPLAY_SIZE * scale;
+    SDL_FRect dstRect = {cursorX, (float)y, drawWidth,
+                         (float)DISPLAY_SIZE * scale};
     SDL_RenderTexture(renderer, fontTexture, &srcRect, &dstRect);
 
-    cursorX += DISPLAY_SIZE * scale;
+    cursorX += drawWidth + (0.5f * scale);
   }
 }
 
@@ -759,7 +914,7 @@ static void DrawGameScene(SDL_Renderer *renderer, SDL_Texture *fontTexture,
 
     // Replay Göstergesi (Metin boyutu 2x ölçeklendi -> 4.0f)
     const char *replay_title = (game->language == 0) ? "GEÇMİŞ İZLENİYOR" : "REPLAY MODE";
-    float replay_title_w = strlen(replay_title) * 8 * 4.0f;
+    float replay_title_w = GetTextWidth(replay_title, 4.0f);
     DrawText(renderer, fontTexture, replay_title, LOGICAL_WIDTH / 2 - replay_title_w / 2,
              40, 4.0f, (SDL_Color){231, 76, 60, 255}); // Parlak Kırmızı
 
@@ -771,7 +926,7 @@ static void DrawGameScene(SDL_Renderer *renderer, SDL_Texture *fontTexture,
       sprintf(note, "Move %d: %s", game->viewIndex,
               game->history[game->viewIndex].notation);
     }
-    int w = strlen(note) * 8 * 4.0f;
+    float w = GetTextWidth(note, 4.0f);
     DrawText(renderer, fontTexture, note, LOGICAL_WIDTH / 2 - w / 2, 100, 4.0f,
              (SDL_Color){44, 62, 80, 255});
 
@@ -811,7 +966,7 @@ static void DrawGameScene(SDL_Renderer *renderer, SDL_Texture *fontTexture,
   if (game->isPvE && game->currentPlayer == game->aiPlayer && !isReplay) {
     const char *thinkingText = (game->language == 0) ? "YAPAY ZEKA DÜŞÜNÜYOR..." : "AI IS THINKING...";
     float textScale = 6.0f;
-    float textWidth = strlen(thinkingText) * 8 * textScale;
+    float textWidth = GetTextWidth(thinkingText, textScale);
     
     // Şık yarı saydam katman
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
@@ -832,7 +987,7 @@ static void DrawGameScene(SDL_Renderer *renderer, SDL_Texture *fontTexture,
   SDL_RenderFillRect(renderer, &menu_btn);
   
   const char *menu_txt = (game->language == 0) ? "ANA MENÜ" : "MAIN MENU";
-  float menu_w = strlen(menu_txt) * 8 * 3.0f;
+  float menu_w = GetTextWidth(menu_txt, 3.0f);
   DrawText(renderer, fontTexture, menu_txt, menu_btn.x + (menu_btn.w - menu_w) / 2, menu_btn.y + 24,
            3.0f, (SDL_Color){255, 255, 255, 255});
 
@@ -862,7 +1017,7 @@ static void DrawGameScene(SDL_Renderer *renderer, SDL_Texture *fontTexture,
   SDL_RenderFillRect(renderer, &restart_btn);
   
   const char *restart_txt = (game->language == 0) ? "YENİDEN" : "RESTART";
-  float restart_w = strlen(restart_txt) * 8 * 3.0f;
+  float restart_w = GetTextWidth(restart_txt, 3.0f);
   DrawText(renderer, fontTexture, restart_txt, restart_btn.x + (restart_btn.w - restart_w) / 2,
            restart_btn.y + 24, 3.0f, (SDL_Color){255, 255, 255, 255});
 }
@@ -888,14 +1043,14 @@ static void DrawMainMenuScene(SDL_Renderer *renderer, SDL_Texture *fontTexture,
   SDL_RenderRect(renderer, &lang_btn);
 
   const char *lang_text = (game->language == 0) ? "DIL: TR" : "LANG: EN";
-  float lang_textWidth = strlen(lang_text) * 8 * 3.0f;
+  float lang_textWidth = GetTextWidth(lang_text, 3.0f);
   DrawText(renderer, fontTexture, lang_text,
            lang_btn.x + (lang_btn.w - lang_textWidth) / 2, lang_btn.y + 22, 3.0f,
            (SDL_Color){255, 255, 255, 255});
 
   // Başlık (8.0f Ölçekli, İnanılmaz Keskin)
   const char *title_text = (game->language == 0) ? "Türk Daması" : "Turkish Checkers";
-  float title_w = strlen(title_text) * 8 * 8.0f;
+  float title_w = GetTextWidth(title_text, 8.0f);
   DrawText(renderer, fontTexture, title_text,
            LOGICAL_WIDTH / 2 - title_w / 2, 180, 8.0f,
            (SDL_Color){245, 246, 250, 255});
@@ -912,7 +1067,7 @@ static void DrawMainMenuScene(SDL_Renderer *renderer, SDL_Texture *fontTexture,
   }
   
   const char *pvp_text = (game->language == 0) ? "İki Kişilik" : "Two Players";
-  float pvp_textWidth = strlen(pvp_text) * 8 * 4.0f;
+  float pvp_textWidth = GetTextWidth(pvp_text, 4.0f);
   DrawText(renderer, fontTexture, pvp_text,
            LOGICAL_WIDTH / 2 - pvp_textWidth / 2, pvp_btn.y + 39, 4.0f,
            (SDL_Color){30, 30, 30, 255});
@@ -929,7 +1084,7 @@ static void DrawMainMenuScene(SDL_Renderer *renderer, SDL_Texture *fontTexture,
   }
 
   const char *pve_text = (game->language == 0) ? "Bilgisayara Karşı" : "Play vs AI";
-  float pve_textWidth = strlen(pve_text) * 8 * 4.0f;
+  float pve_textWidth = GetTextWidth(pve_text, 4.0f);
   DrawText(renderer, fontTexture, pve_text,
            LOGICAL_WIDTH / 2 - pve_textWidth / 2, pve_btn.y + 39, 4.0f,
            (SDL_Color){30, 30, 30, 255});
@@ -945,7 +1100,7 @@ static void DrawMainMenuScene(SDL_Renderer *renderer, SDL_Texture *fontTexture,
 
     // Taraf Seçimi (Choose Side)
     const char *side_txt = (game->language == 0) ? "Taraf Seçimi" : "Choose Side";
-    float side_w = strlen(side_txt) * 8 * 3.5f;
+    float side_w = GetTextWidth(side_txt, 3.5f);
     DrawText(renderer, fontTexture, side_txt, LOGICAL_WIDTH / 2 - side_w / 2,
              690, 3.5f, (SDL_Color){220, 225, 230, 255});
 
@@ -970,18 +1125,18 @@ static void DrawMainMenuScene(SDL_Renderer *renderer, SDL_Texture *fontTexture,
     }
 
     const char *white_txt = (game->language == 0) ? "Beyaz" : "White";
-    float white_w = strlen(white_txt) * 8 * 3.0f;
+    float white_w = GetTextWidth(white_txt, 3.0f);
     DrawText(renderer, fontTexture, white_txt, white_btn.x + (white_btn.w - white_w) / 2, white_btn.y + 24,
              3.0f, (SDL_Color){30, 30, 30, 255});
 
     const char *black_txt = (game->language == 0) ? "Siyah" : "Black";
-    float black_w = strlen(black_txt) * 8 * 3.0f;
+    float black_w = GetTextWidth(black_txt, 3.0f);
     DrawText(renderer, fontTexture, black_txt, black_btn.x + (black_btn.w - black_w) / 2, black_btn.y + 24,
              3.0f, (SDL_Color){255, 255, 255, 255});
 
     // Zorluk (Minimax Derinliği)
     const char *diff_txt = (game->language == 0) ? "Yapay Zeka Derinliği" : "AI Difficulty";
-    float diff_w = strlen(diff_txt) * 8 * 3.5f;
+    float diff_w = GetTextWidth(diff_txt, 3.5f);
     DrawText(renderer, fontTexture, diff_txt, LOGICAL_WIDTH / 2 - diff_w / 2, 
              870, 3.5f, (SDL_Color){220, 225, 230, 255});
 
@@ -1026,7 +1181,7 @@ static void DrawMainMenuScene(SDL_Renderer *renderer, SDL_Texture *fontTexture,
   SDL_RenderFillRect(renderer, &start_btn);
   
   const char *text = (game->language == 0) ? "OYUNU BAŞLAT" : "START GAME";
-  float textWidth = strlen(text) * 8 * 4.0f;
+  float textWidth = GetTextWidth(text, 4.0f);
   DrawText(renderer, fontTexture, text, LOGICAL_WIDTH / 2 - textWidth / 2,
            start_btn.y + 39, 4.0f, (SDL_Color){255, 255, 255, 255});
 }
@@ -1054,13 +1209,13 @@ static void DrawGameOverScene(SDL_Renderer *renderer, SDL_Texture *fontTexture,
     }
   }
   
-  float textWidth = strlen(text) * 8 * 4.0f;
+  float textWidth = GetTextWidth(text, 4.0f);
   DrawText(renderer, fontTexture, text, LOGICAL_WIDTH / 2 - textWidth / 2,
            LOGICAL_HEIGHT / 2 - 16, 4.0f, (SDL_Color){245, 246, 250, 255});
 
   // Alt bilgi (Herhangi bir yere tıkla çıkışı için)
   const char *info = (game->language == 0) ? "Ana menüye dönmek için herhangi bir yere tıklayın." : "Click anywhere to return to main menu.";
-  float info_w = strlen(info) * 8 * 2.0f;
+  float info_w = GetTextWidth(info, 2.0f);
   DrawText(renderer, fontTexture, info, LOGICAL_WIDTH / 2 - info_w / 2,
            LOGICAL_HEIGHT / 2 + 100, 2.0f, (SDL_Color){189, 195, 199, 255});
 }

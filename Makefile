@@ -9,7 +9,7 @@ BREW_PREFIX = /opt/homebrew
 C_CFLAGS = -O3 -Iinclude -I$(BREW_PREFIX)/include
 
 # Linker Flag'leri
-LDFLAGS = -L$(BREW_PREFIX)/lib -lSDL3 -framework Cocoa -framework Foundation
+LDFLAGS = -L$(BREW_PREFIX)/lib -lSDL3 -lSDL3_ttf -framework Cocoa -framework Foundation
 
 # Kaynak Dosyalar
 SRCS = src/dama_main.c src/dama_game.c src/dama_renderer.c src/dama_ai.c
@@ -34,6 +34,8 @@ $(APP_BUNDLE): $(TARGET)
 	@cp $(TARGET) $(MACOS_DIR)/
 	@echo "Copying Info.plist..."
 	@cp $(PLIST_SRC) $(PLIST_DEST)
+	@echo "Copying font.ttf to resources..."
+	@cp font.ttf $(RESOURCES_DIR)/
 	@echo "Fixing library paths for .app bundle..."
 	@install_name_tool -add_rpath $(BREW_PREFIX)/lib $(MACOS_DIR)/$(TARGET)
 	@echo "Signing the application bundle..."
